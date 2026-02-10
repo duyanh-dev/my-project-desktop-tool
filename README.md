@@ -2,6 +2,9 @@
 ```
 pro-dev-qc-tool
 ├─ README.md
+├─ __MACOSX
+│  └─ src
+│     └─ styles
 ├─ assets
 ├─ build
 │  └─ icon.icns
@@ -32,7 +35,8 @@ pro-dev-qc-tool
    │  ├─ snake04.png
    │  └─ snake05.png
    ├─ main
-   │  └─ index.js
+   │  ├─ index.js
+   │  └─ updater.js
    ├─ renderer
    │  ├─ clipboard.js
    │  ├─ codepen.js
@@ -41,7 +45,8 @@ pro-dev-qc-tool
    │  ├─ knotion.js
    │  ├─ moodFlow.js
    │  ├─ overlay.js
-   │  └─ renderer.js
+   │  ├─ renderer.js
+   │  └─ updater-ui.js
    ├─ styles
    │  ├─ clipboard
    │  │  └─ clipboard.css
