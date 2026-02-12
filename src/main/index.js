@@ -30,6 +30,47 @@ if (!process.env.GITHUB_TOKEN) {
     process.env.GITHUB_TOKEN = _getGatekeeperKey();
 }
 
+ipcMain.handle('capture-page', async (event, url) => {
+    const tempWin = new BrowserWindow({
+        width: 1920, // Giữ nguyên chiều rộng thiết kế
+        height: 1080, // Chiều cao tạm thời
+        show: false,
+        webPreferences: { offscreen: true }
+    });
+    
+    try {
+        await tempWin.loadURL(url);
+        
+        // 1. Đợi một chút để page nạp xong CSS/Fonts
+        await new Promise(r => setTimeout(r, 2000));
+
+        // 2. PHÉP THUẬT Ở ĐÂY: Lấy chiều cao thực tế của toàn bộ trang web
+        const fullHeight = await tempWin.webContents.executeJavaScript(`
+            Math.max(
+                document.documentElement.scrollHeight,
+                document.body.scrollHeight,
+                document.documentElement.offsetHeight
+            );
+        `);
+
+        // 3. Thay đổi kích thước cửa sổ ảo khớp 100% với chiều cao web
+        // Chúng ta set height mới, width giữ nguyên 1920
+        tempWin.setBounds({ x: 0, y: 0, width: 1920, height: fullHeight });
+
+        // 4. Đợi thêm 500ms để trình duyệt render lại theo kích thước mới
+        await new Promise(r => setTimeout(r, 500));
+        
+        // 5. Chụp ảnh (Bây giờ nó sẽ chụp từ đầu đến chân trang)
+        const image = await tempWin.webContents.capturePage();
+        
+        tempWin.close();
+        return image.toDataURL();
+    } catch (error) {
+        if (!tempWin.isDestroyed()) tempWin.close();
+        throw error;
+    }
+});
+
 async function validateGatekeeper() {
     try {
         console.log("🔍 Đang kiểm tra bản quyền...");

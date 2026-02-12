@@ -1,0 +1,84 @@
+<div class="visual-diff-container">
+    <div class="workflow-header">
+        <div class="step-badge">BƯỚC 1: NẠP DỮ LIỆU</div>
+        <h1>Pixel-Perfect Auditor (1920px)</h1>
+    </div>
+
+    <div class="auto-capture-bar">
+        <input type="text" id="web-url" placeholder="Nhập URL website để tự động chụp (Ví dụ: https://google.com)">
+        <button onclick="autoCaptureWeb()"><i class="fa-solid fa-camera-retro"></i> CHỤP TỰ ĐỘNG</button>
+    </div>
+
+    <div class="diff-input-grid">
+        <div class="drop-card" id="drop-design">
+            <div class="card-icon"><i class="fa-solid fa-pen-ruler"></i></div>
+            <h3>DESIGN (Mockup 1920px)</h3>
+            <p>Kéo file thiết kế vào đây</p>
+            <div class="file-status" id="status-design">Chưa có file</div>
+            <img id="preview-design" class="preview-mini">
+        </div>
+        
+
+        <div class="compare-action">
+            <button id="btn-run-compare" class="mega-btn" disabled onclick="runComparison()">
+                <i class="fa-solid fa-bolt"></i><br>PHÂN TÍCH
+            </button>
+            <div class="tolerance-tool">
+                <label>Độ nhạy (Tolerance): <span id="threshold-val">0.1</span></label>
+                <input type="range" id="diff-threshold" min="0" max="1" step="0.05" value="0.1">
+            </div>
+        </div>
+
+        <div class="drop-card" id="drop-actual">
+            <div class="card-icon"><i class="fa-solid fa-browser"></i></div>
+            <h3>ACTUAL (Screenshot)</h3>
+            <p>Kéo file chụp web vào đây</p>
+            <div class="file-status" id="status-actual">Chưa có file</div>
+            <img id="preview-actual" class="preview-mini">
+        </div>
+    </div>
+
+    <div id="result-area" class="result-dashboard" style="display: none;">
+        <div class="step-badge">BƯỚC 2: SO SÁNH CHI TIẾT</div>
+        
+        <div class="view-tabs">
+            <button class="v-tab active" onclick="switchDiffView('slider')">THANH TRƯỢT (SLIDER)</button>
+            <button class="v-tab" onclick="switchDiffView('diff')">VÙNG SAI LỆCH (HIGHLIGHT)</button>
+            <button class="v-tab" onclick="switchDiffView('ghost')">GHOSTING (BÓNG MA)</button>
+        </div>
+
+        <div class="display-container">
+            <div id="view-slider" class="mode-view">
+                <div class="slider-wrapper">
+                    <div class="img-layer actual" data-label="ACTUAL (THỰC TẾ)"></div>
+                    <div class="img-layer design" data-label="DESIGN (BẢN VẼ)"></div>
+                    <input type="range" min="0" max="100" value="50" class="slider-bar" id="slider-range">
+                </div>
+            </div>
+            <div id="view-ghost" class="mode-view" style="display: none;">
+                <div class="ghost-container">
+                    <div class="img-layer actual"></div>
+                    <div class="img-layer design" style="opacity: 0.5; width: 100% !important; border: none;"></div>
+                </div>
+            </div>
+            <div id="view-diff" class="mode-view" style="display: none;">
+                <canvas id="diff-canvas"></canvas>
+            </div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-item">
+                <span class="label">Tỷ lệ sai lệch:</span>
+                <span id="diff-percent" class="value">0%</span>
+            </div>
+            <div class="stat-item">
+                <span class="label">Số Pixel lỗi:</span>
+                <span id="diff-pixels" class="value">0</span>
+            </div>
+
+            <button class="v-tab export-btn" onclick="exportAuditReport()">
+                <i class="fa-solid fa-file-export"></i> XUẤT BÁO CÁO (IMAGE)
+            </button>
+        </div>
+    </div>
+</div>

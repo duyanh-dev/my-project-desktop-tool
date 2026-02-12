@@ -1,0 +1,351 @@
+/* ============================================================
+   1. WRAPPERS & GLOBAL LAYOUT (Cấu trúc khung và Cuộn trang)
+   ============================================================ */
+   #visual-diff-wrapper {
+    width: 100%;
+}
+
+#tab-visual-diff {
+    height: 100%;           
+    overflow-y: auto !important; 
+    display: flex;          
+    flex-direction: column; 
+}
+
+.visual-diff-container {
+    padding: 25px;
+    padding-bottom: 100px;  
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    flex: 1 0 auto;        
+    height: auto;          
+    overflow: visible;     
+}
+
+.workflow-header {
+    margin-bottom: 30px;
+    border-left: 4px solid #007aff;
+    padding-left: 15px;
+}
+
+.step-badge {
+    font-size: 10px;
+    font-weight: 800;
+    color: #007aff;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+/* ============================================================
+   2. BƯỚC 1: INPUT SECTION (Grid, Card & Drop Zone)
+   ============================================================ */
+.diff-input-grid {
+    display: grid;
+    grid-template-columns: 1fr 180px 1fr;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.drop-card {
+    background: #1c1e26;
+    border: 2px dashed #3f4451;
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.drop-card.hover {
+    border-color: #007aff;
+    background: rgba(0, 122, 255, 0.08);
+    transform: translateY(-5px);
+}
+
+.card-icon {
+    font-size: 40px;
+    color: #5c6370;
+    margin-bottom: 15px;
+}
+
+.drop-card h3 { margin: 10px 0 5px; font-size: 16px; }
+.drop-card p { color: #848995; font-size: 13px; }
+
+.file-status {
+    font-size: 11px;
+    color: #007aff;
+    margin-top: 10px;
+    word-break: break-all;
+}
+
+.preview-mini {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-top: 15px;
+    border: 1px solid #333;
+    display: none;
+}
+
+/* ============================================================
+   3. ACTION CONTROLS (Nút bấm & Tolerance)
+   ============================================================ */
+.compare-action { text-align: center; }
+
+.mega-btn {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: none;
+    background: #2c2f3a;
+    color: #5c6370;
+    font-weight: 800;
+    font-size: 12px;
+    cursor: not-allowed;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.4);
+}
+
+.mega-btn.ready {
+    background: linear-gradient(135deg, #007aff, #0056b3);
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(0, 122, 255, 0.3);
+}
+
+.mega-btn.ready:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.mega-btn i { font-size: 24px; margin-bottom: 8px; }
+
+.tolerance-tool { margin-top: 20px; text-align: left; }
+.tolerance-tool label { font-size: 11px; color: #848995; display: block; margin-bottom: 8px; }
+.tolerance-tool input[type=range] { width: 100%; cursor: pointer; }
+
+/* ============================================================
+   4. BƯỚC 2: RESULT DASHBOARD (Tabs & Stats)
+   ============================================================ */
+.result-dashboard {
+    background: #1c1e26;
+    border-radius: 20px;
+    padding: 25px;
+    animation: slideUp 0.5s ease;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.view-tabs {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.v-tab {
+    background: #2c2f3a;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    color: #848995;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.v-tab.active {
+    background: #007aff;
+    color: white;
+}
+
+.stats-panel {
+    display: flex;
+    gap: 30px;
+    margin-top: 25px;
+    border-top: 1px solid #333;
+    padding-top: 20px;
+}
+
+.stat-item { display: flex; flex-direction: column; }
+.stat-item .label { font-size: 12px; color: #848995; }
+.stat-item .value { font-size: 24px; font-weight: 800; color: #ff3b30; }
+
+/* ============================================================
+   5. COMPARISON VIEWPORT (Khung soi ảnh & Zoom)
+   ============================================================ */
+.display-container {
+    background: #12141d;
+    border-radius: 12px;
+    height: 750px; 
+    width: 100%;
+    overflow: auto; 
+    position: relative;
+    border: 1px solid #333;
+}
+
+.display-container:active { cursor: grabbing; }
+
+/* Wrapper chứa nội dung 1920px */
+.slider-wrapper, .ghost-container, #diff-canvas {
+    width: 1920px !important; 
+    min-height: 100%;
+    transform-origin: 0 0;
+    position: relative;
+    display: block;
+    transition: transform 0.1s ease-out;
+}
+
+.ghost-container { 
+    height: 1000px; 
+}
+
+/* Các layer ảnh nền */
+.img-layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 1920px; 
+    height: 100%;
+    background-repeat: no-repeat;
+    background-position: top left;
+    background-size: 1920px auto !important; 
+}
+
+.img-layer.design {
+    border-right: 2px solid #007aff;
+    z-index: 2;
+    width: 50%; 
+    overflow: hidden; 
+}
+
+.img-layer.actual {
+    z-index: 1;
+    width: 1920px !important;
+}
+
+/* Canvas Highlight vùng lệch */
+#diff-canvas {
+    display: block;
+    margin: 0 auto;
+    background-image: 
+        linear-gradient(45deg, #181a21 25%, transparent 25%), 
+        linear-gradient(-45deg, #181a21 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #181a21 75%), 
+        linear-gradient(-45deg, transparent 75%, #181a21 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+/* ============================================================
+   6. CONTROLS (Thanh Slider & Thumb)
+   ============================================================ */
+.slider-bar {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    appearance: none;
+    background: transparent;
+    z-index: 100;
+    cursor: ew-resize;
+    margin: 0;
+}
+
+.slider-bar::-webkit-slider-thumb {
+    appearance: none;
+    width: 2px;
+    height: 1000px; 
+    background: transparent;
+}
+
+/* Nhãn phân biệt Design / Actual */
+.img-layer::before {
+    content: attr(data-label);
+    position: absolute;
+    top: 20px;
+    padding: 6px 15px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+    z-index: 5;
+    pointer-events: none;
+}
+
+.img-layer.design::before { left: 20px; border-left: 3px solid #007aff; }
+.img-layer.actual::before { right: 20px; border-right: 3px solid #34c759; }
+
+/* Nâng cấp thanh Slider mượt hơn */
+.slider-bar::-webkit-slider-thumb {
+    appearance: none;
+    width: 4px;
+    height: 100vh;
+    background: #007aff;
+    cursor: ew-resize;
+    box-shadow: 0 0 10px rgba(0, 122, 255, 0.5);
+}
+
+/* Nút Export Report */
+.export-btn {
+    background: #34c759 !important;
+    color: white !important;
+    margin-left: auto;
+}
+
+
+.auto-capture-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    background: #1c1e26;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.auto-capture-bar input {
+    flex: 1;
+    background: #12141d;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 8px 15px;
+    border-radius: 4px;
+    outline: none;
+}
+
+.auto-capture-bar button {
+    background: #007aff;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Thêm hiệu ứng cho Canvas để soi lỗi */
+#diff-canvas {
+    cursor: crosshair;
+    image-rendering: pixelated; /* Giúp soi lỗi pixel không bị mờ */
+}
+
+/* Thêm tooltip nếu bạn muốn hiện thông tin khi hover (Nâng cao) */
+.mismatch-label {
+    position: absolute;
+    background: #ffff00;
+    color: #000;
+    padding: 2px 5px;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 3px;
+    pointer-events: none;
+    z-index: 100;
+}

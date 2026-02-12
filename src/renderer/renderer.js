@@ -455,6 +455,45 @@ window.showTab = (id) => {
     document.getElementById(`tab-${id}`).style.display = 'flex';
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
     document.getElementById(`nav-${id}`).classList.add('active');
+    if (id === 'visual-diff') {
+        const wrapper = document.getElementById('visual-diff-wrapper');
+        
+        if (wrapper && wrapper.innerHTML.trim() === "") {
+            try {
+                const htmlPath = path.join(__dirname, '../ui/features/visual-diff.html');
+                const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+                wrapper.innerHTML = htmlContent;
+                setTimeout(() => {
+                    if (typeof window.initVisualDiff === 'function') {
+                        window.initVisualDiff();
+                    }
+                }, 50);
+            } catch (err) {
+                console.error("Lỗi nạp file visual-diff.html:", err);
+            }
+        }
+    }
+    if (id === 'codelab') {
+        const wrapper = document.getElementById('codelab-container'); // Container trong index.html
+        
+        if (wrapper && wrapper.innerHTML.trim() === "") {
+            try {
+                // Đường dẫn tới file codeLab.html
+                const htmlPath = path.join(__dirname, '../ui/features/codeLab.html');
+                const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+                wrapper.innerHTML = htmlContent;
+
+                // Sau khi nạp HTML, gọi hàm init từ file codeLab.js
+                setTimeout(() => {
+                    if (typeof window.initCodeLab === 'function') {
+                        window.initCodeLab();
+                    }
+                }, 50);
+            } catch (err) {
+                console.error("Lỗi nạp file codeLab.html:", err);
+            }
+        }
+    }
 };
 
 window.showModuleSettings = (id, event) => {

@@ -1,0 +1,442 @@
+#codelab-container {
+    width: 100%;
+}
+
+.cl-wrapper {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    background: #0b0e14;
+    overflow: hidden;
+    color: #adbac7;
+}
+
+.cl-preview-section {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cl-canvas {
+    width: 100%;
+    height: 100%;
+    background-image: radial-gradient(#2d333b 1px, transparent 1px);
+    background-size: 30px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    border: 1px solid #1c2128;
+}
+
+.cl-clippy-wrapper {
+    position: relative;
+    /* Bỏ width/height cố định, JS sẽ điều khiển */
+    max-width: 100%;
+    max-height: 100%;
+    background: rgba(255, 255, 255, 0.03); /* Thêm nền mờ để biết phạm vi canvas */
+    border: 1px dashed #2d333b;
+    transition: width 0.1s, height 0.1s;
+    z-index: 10;
+}
+
+.cl-shadow-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Layer này sẽ hứng filter drop-shadow từ JS */
+    z-index: 1; /* Nằm dưới các chấm tròn */
+}
+
+#cl-target {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    transition: all 0.1s ease;
+}
+
+/* Handles Layer */
+.cl-handle-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 20
+}
+
+.cl-dot {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: #535bf2;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: all;
+    cursor: move;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.1); /* Shadow nhẹ riêng cho dot */
+    z-index: 30;
+}
+
+.cl-dot:hover {
+    background: #ff4757;
+    transform: translate(-50%, -50%) scale(1.2);
+}
+
+/* Sidebar UI */
+.cl-sidebar {
+    width: 400px;
+    background: #12151c;
+    border-left: 1px solid #22272e;
+    overflow-y: auto;
+}
+
+.cl-sidebar-content {
+    padding: 20px;
+}
+
+.cl-card {
+    background: #1c2128;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #2d333b;
+}
+
+.cl-card-header {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #768390;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 8px;
+}
+
+.cl-control {
+    margin-bottom: 10px;
+}
+
+.cl-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.cl-label span:last-child {
+    color: #535bf2;
+    font-family: monospace;
+}
+
+input[type=range] {
+    width: 100%;
+    height: 4px;
+    background: #2d333b;
+    appearance: none;
+    border-radius: 2px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #535bf2;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.cl-color-grid {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+input[type=color] {
+    width: 40px;
+    height: 30px;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.cl-select {
+    width: 100%;
+    background: #22272e;
+    border: 1px solid #444c56;
+    color: #adbac7;
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.cl-code-section {
+    background: #0d1117;
+    border-radius: 8px;
+    border: 1px solid #30363d;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.cl-code-tabs {
+    display: flex;
+    background: #161b22;
+    padding: 4px;
+    align-items: center;
+}
+
+.cl-code-btn {
+    background: none;
+    border: none;
+    color: #768390;
+    font-size: 11px;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.cl-code-btn.active {
+    background: #21262d;
+    color: #ecf2f8;
+}
+
+.cl-copy-btn {
+    margin-left: auto;
+    background: #238636;
+    color: #fff;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.cl-code-display {
+    padding: 12px;
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    color: #7ee787;
+    max-height: 180px;
+    overflow: auto;
+}
+
+/* Dàn hàng ngang cho Width/Height và Color */
+.cl-input-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.cl-input-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cl-input-group label {
+    font-size: 11px;
+    color: #8b949e;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* Style cho ô nhập số chuyên nghiệp */
+input[type=number] {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    padding: 8px;
+    border-radius: 6px;
+    outline: none;
+    font-family: monospace;
+    width: 100%;
+}
+
+input[type=number]:focus {
+    border-color: #535bf2;
+}
+
+/* Màu nền Canvas mặc định */
+/* Container Canvas */
+.cl-canvas {
+    position: relative;
+    overflow: hidden; /* Để các đốm màu không tràn ra ngoài */
+    background-color: #ffffff; /* Nền trắng để soi Shadow cực rõ */
+    z-index: 1;
+}
+
+/* Các đốm màu trang trí phía sau */
+.cl-canvas-decor {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1; /* Nằm dưới Target */
+    filter: blur(40px);
+    opacity: 0.5;
+}
+
+.cl-blob {
+    position: absolute;
+    border-radius: 50%;
+}
+
+.cl-blob-1 {
+    width: 200px; height: 200px;
+    background: #6366f1;
+    top: 10%; left: 10%;
+}
+
+.cl-blob-2 {
+    width: 150px; height: 150px;
+    background: #a855f7;
+    bottom: 15%; right: 15%;
+}
+
+.cl-blob-3 {
+    width: 100px; height: 100px;
+    background: #f43f5e;
+    top: 40%; left: 50%;
+}
+
+/* Làm cho Shadow hiện rõ hơn trên Preview */
+
+
+.cl-canvas-decor {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Không cho chạm vào để không lỗi kéo thả */
+    z-index: 0;
+}
+
+.cl-blob {
+    position: absolute;
+    filter: blur(50px);
+    opacity: 0.6;
+    border-radius: 50%;
+    z-index: 0;
+}
+
+.cl-blob-1 { width: 250px; height: 250px; background: #ff0080; top: 10%; left: 20%; }
+.cl-blob-2 { width: 300px; height: 300px; background: #7928ca; bottom: 10%; right: 20%; }
+.cl-blob-3 { width: 150px; height: 150px; background: #0070f3; top: 40%; left: 40%; }
+
+#cl-clippy-wrapper {
+    z-index: 2; /* Nằm trên blobs */
+    /* Transition để mượt khi đổi Shadow */
+    transition: filter 0.2s ease;
+}
+
+#cl-target {
+    /* Không dùng box-shadow ở đây nữa vì đã có filter ở cha */
+    transition: background 0.2s ease, backdrop-filter 0.1s ease;
+}
+
+/* Lớp Noise Texture (Bí mật của UI cao cấp) */
+.cl-noise {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 1;
+    display: none; /* Mặc định tắt */
+}
+
+/* Hiệu ứng Blobs di chuyển mượt mà */
+@keyframes blobFloat {
+    0% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0, 0) scale(1); }
+}
+
+.cl-blob {
+    animation: blobFloat 10s infinite ease-in-out;
+}
+
+.cl-blob-2 { animation-delay: -3s; }
+.cl-blob-3 { animation-delay: -6s; }
+
+/* Dừng animation khi user bỏ tích */
+.cl-canvas.no-animation .cl-blob {
+    animation: none !important;
+}
+
+/* Input Text Style */
+.cl-input-text {
+    width: 100%;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    color: #fff;
+    padding: 8px;
+    border-radius: 6px;
+    margin-top: 5px;
+}
+
+.cl-presets-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.cl-preset-btn {
+    background: #2d333b;
+    border: 1px solid #444c56;
+    color: #adbac7;
+    padding: 6px;
+    font-size: 11px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.cl-preset-btn:hover { background: #535bf2; color: white; border-color: #535bf2; }
+
+.cl-gradient-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.cl-grad-stop {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #0d1117;
+    padding: 5px 10px;
+    border-radius: 6px;
+}
+
+.cl-grad-stop input[type=color] {
+    width: 30px; height: 24px; border: none; background: none; cursor: pointer;
+}
+
+.cl-remove-stop {
+    margin-left: auto;
+    background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 12px;
+}
+
+.cl-add-btn {
+    width: 100%;
+    background: #21262d;
+    border: 1px dashed #444c56;
+    color: #8b949e;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+.cl-add-btn:hover { color: #535bf2; border-color: #535bf2; }
