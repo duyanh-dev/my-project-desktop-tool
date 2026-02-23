@@ -1,0 +1,82 @@
+<div class="cl-main-wrapper">
+    <main class="cl-workspace">
+        <div class="cl-artboard lh-artboard-studio">
+            <div class="lh-container-main">
+                <div class="lh-header-v2">
+                    <span class="lh-badge">Smart Logic v2.0</span>
+                    <h1>Trợ lý Tạo đơn Nghỉ phép</h1>
+                    <p>Chọn tình huống bạn đang gặp phải để nhận gợi ý chuẩn xác.</p>
+                </div>
+
+                <div class="lh-mode-switcher">
+                    <button id="btn-mode-early" class="lh-mode-btn active"  onclick="switchLeaveMode('early')">
+                        <i class="fa-solid fa-person-walking-arrow-right"></i> Tính đơn Về sớm
+                    </button>
+                    <button id="btn-mode-late" class="lh-mode-btn" onclick="switchLeaveMode('late')">
+                        <i class="fa-solid fa-clock"></i> Tính đơn Đi muộn
+                    </button>
+                </div>
+
+                <div class="lh-form-card">
+                    <div class="cl-field">
+                        <label>Loại đơn muốn tạo</label>
+                        <select id="lh-leave-type" class="cl-select-v2">
+                            <option value="Nghỉ phép năm">Nghỉ phép năm</option>
+                            <option value="Nghỉ bù">Nghỉ bù</option>
+                            <option value="Nghỉ kết hôn (bản thân)">Nghỉ kết hôn (bản thân)</option>
+                            <option value="Nghỉ hưởng lương khác">Nghỉ hưởng lương khác</option>
+                        </select>
+                    </div>
+
+                    <div id="group-late" class="lh-input-group-mode mt-20" style="display: none;">
+                        <div class="cl-field">
+                            <label><i class="fa-solid fa-business-time"></i> Giờ bạn vào làm thực tế</label>
+                            <input type="time" id="lh-late-in" value="11:23" class="cl-input-v2">
+                            <small class="lh-input-desc">Ví dụ: Bạn đi làm lúc 11:23</small>
+                        </div>
+                    </div>
+
+                    <div id="group-early" class="lh-input-group-mode mt-20" >
+                        <div class="cl-grid-2">
+                            <div class="cl-field">
+                                <label><i class="fa-solid fa-right-to-bracket"></i> Giờ Check-in (Thực tế)</label>
+                                <input type="time" id="lh-early-in" value="08:53" class="cl-input-v2">
+                            </div>
+                            <div class="cl-field">
+                                <label><i class="fa-solid fa-clock-rotate-left"></i> Giờ muốn về</label>
+                                <input type="time" id="lh-early-out" value="17:20" class="cl-input-v2">
+                            </div>
+                        </div>
+                        <small class="lh-input-desc">Sử dụng khi bạn vào làm đúng khung 7:30-9:30 nhưng cần về sớm.</small>
+                    </div>
+
+                    <button class="lh-btn-calculate" onclick="calculateLeaveSuggestion()">
+                        Phân tích & Xuất gợi ý chi tiết
+                    </button>
+                </div>
+
+                <div id="lh-result-panel" style="display: none;"></div>
+            </div>
+        </div>
+    </main>
+
+    <aside class="cl-inspector">
+        <div class="cl-inspector-scroll">
+            <section class="cl-section">
+                <h3 class="cl-section-title">Quy tắc chấm công</h3>
+                <div class="lh-rule-card">
+                    <div class="lh-rule-row"><span>Sáng (Flex)</span> <strong>07:30 - 09:30</strong></div>
+                    <div class="lh-rule-row"><span>Nghỉ trưa</span> <strong>12:00 - 13:00</strong></div>
+                    <div class="lh-rule-row"><span>Định mức</span> <strong>08 Tiếng</strong></div>
+                </div>
+            </section>
+            
+            <section class="cl-section">
+                <h3 class="cl-section-title">Lưu ý Block 15'</h3>
+                <p class="lh-note-text">
+                    Hệ thống tính theo block 15 phút. Chỉ cần trễ <b>1 phút</b> sẽ bị tính là trễ <b>15 phút</b>. Tương tự cho việc về sớm.
+                </p>
+            </section>
+        </div>
+    </aside>
+</div>
