@@ -434,7 +434,7 @@ input[type=number]:focus {
     background: #21262d;
     border: 1px dashed #444c56;
     color: #8b949e;
-    padding: 8px;
+    padding: 8px; 
     border-radius: 6px;
     cursor: pointer;
     font-size: 12px;
