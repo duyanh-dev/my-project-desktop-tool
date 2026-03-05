@@ -76,19 +76,55 @@
             </div>
 
             <div class="cl-card">
-                <header class="cl-card-header"><i class="fa-solid fa-scissors"></i> Shape Engine</header>
-                <select id="clip-shape" class="cl-select">
-                    <option value="polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)">Square</option>
-                    <option value="polygon(50% 0%, 0% 100%, 100% 100%)">Triangle</option>
-                    <option value="polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)">Hexagon</option>
-                </select>
-                <p style="font-size: 10px; color: #64748b; margin-top: 10px; line-height: 1.4;">
-                    • Double-click preview to <b>add</b> point<br>
-                    • Right-click dot to <b>remove</b> point
-                </p>
+                <header class="cl-card-header"><i class="fa-solid fa-microchip"></i> Shape Engine V2</header>
+                
+                <div class="cl-input-row" style="margin-bottom: 15px;">
+                    <select id="cl-engine-mode" class="cl-select">
+                        <option value="manual">Manual Edit (Dots)</option>
+                        <option value="wavy">Wavy / Curve</option>
+                        <option value="rounded">Rounded Polygon</option>
+                        <option value="flower">Flower / Petals</option> <option value="burst">Starburst</option> </select>
+                    <button class="cl-reset-btn" onclick="resetShape()" title="Reset Shape"><i class="fa-solid fa-rotate-left"></i></button>
+                </div>
+            
+                <div id="cl-procedural-controls" style="display: none; border-top: 1px solid #2d333b; padding-top: 10px;">
+                    <div class="cl-control">
+                        <div class="cl-label"><span>Points / Waves</span> <span id="val-shape-points">8</span></div>
+                        <input type="range" id="cl-shape-points" min="3" max="50" value="8">
+                    </div>
+                    <div class="cl-control">
+                        <div class="cl-label"><span>Curvature / Depth</span> <span id="val-shape-depth">10</span>%</div>
+                        <input type="range" id="cl-shape-depth" min="-50" max="50" value="10">
+                    </div>
+                    <div class="cl-control">
+                        <div class="cl-label"><span>Roundness</span> <span id="val-shape-round">0</span></div>
+                        <input type="range" id="cl-shape-round" min="0" max="100" value="50">
+                    </div>
+                </div>
+
+                <div class="cl-advanced-shape-tools" style="border-top: 1px solid #2d333b; margin-top: 10px; padding-top: 10px;">
+                    <div class="cl-control">
+                        <div class="cl-label"><span>Shape Rotation</span> <span id="val-shape-rotate">0</span>°</div>
+                        <input type="range" id="cl-shape-rotate" min="0" max="360" value="0">
+                    </div>
+                    <div class="cl-control">
+                        <label style="font-size: 11px; cursor: pointer; color: #adbac7;">
+                            <input type="checkbox" id="cl-invert-shape"> Invert Shape (Cut Outside)
+                        </label>
+                    </div>
+                </div>
+            
+                <div id="cl-manual-controls">
+                    <select id="clip-shape" class="cl-select">
+                        <option value="polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)">Square</option>
+                        <option value="polygon(50% 0%, 0% 100%, 100% 100%)">Triangle</option>
+                        <option value="polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)">Hexagon</option>
+                    </select>
+                </div>
+            
                 <div class="cl-extra-toggles" style="margin-top: 15px;">
                     <label style="font-size: 11px; cursor: pointer;">
-                        <input type="checkbox" id="cl-show-decor" checked> Show Background Blobs
+                        <input type="checkbox" id="cl-show-decor" > Show Background Blobs
                     </label>
                 </div>
             </div>
