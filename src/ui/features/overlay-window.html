@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; background: transparent; }
+        #overlay-img {
+            /* Mặc định ảnh sẽ được kiểm soát kích thước bằng JS (Stretch) */
+            display: block;
+            -webkit-app-region: drag;
+            cursor: move;
+            image-rendering: -webkit-optimize-contrast; 
+            transition: opacity 0.2s;
+            transform-origin: top left; /* Cần thiết để dịch chuyển khi crop */
+        }
+        #overlay-img.locked { -webkit-app-region: no-drag; }
+        #overlay-img.diff { mix-blend-mode: difference; }
+    </style>
+</head>
+<body>
+    <img id="overlay-img" src="">
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        const img = document.getElementById('overlay-img');
+        let currentScale = 1;
+
+        ipcRenderer.on('update-overlay', (e, data) => {
+            // 1. Cập nhật nguồn ảnh
+            if (data.src && img.src !== data.src) {
+                img.src = data.src;
+                img.onload = () => {
+                    // Tự động resize lần đầu khi nạp ảnh
+                    ipcRenderer.send('resize-overlay-window', { 
+                        width: img.naturalWidth, 
+                        height: img.naturalHeight,
+                        scale: currentScale 
+                    });
+                };
+            }
+
+            const s = data.scale || 1;
+
+            // Áp dụng Stretch (Bóp/giãn) cho ảnh gốc
+            if (data.width) img.style.width = data.width + 'px';
+            if (data.height) img.style.height = data.height + 'px';
+
+            // 3. Xử lý Crop (Sử dụng cropInset từ pixelPerfect.js)
+            if (data.cropInset) {
+                const { top, right, bottom, left } = data.cropInset;
+                // clip-path: inset(top right bottom left)
+                img.style.clipPath = `inset(${top * s}px ${right * s}px ${bottom * s}px ${left * s}px)`;
+                
+                // Dịch chuyển ảnh về 0,0 (Tọa độ dịch chuyển cũng phải nhân Scale)
+                img.style.transform = `translate(${-left * s}px, ${-top * s}px)`;
+                
+                // Quan trọng: Cửa sổ overlay phải bằng kích thước vùng Crop
+                ipcRenderer.send('resize-overlay-window', { 
+                width: data.cropSize.w * s, 
+                height: data.cropSize.h * s,
+                scale: 1 // Gửi scale = 1 vì ta đã tự nhân size ở trên
+            });
+            }
+
+            // 4. Các thuộc tính Visual khác
+            if (data.opacity !== undefined) img.style.opacity = data.opacity;
+            if (data.scale !== undefined) currentScale = data.scale;
+            
+            if (data.mode === 'diff') img.classList.add('diff'); 
+            else img.classList.remove('diff');
+            
+            if (data.isLocked !== undefined) img.classList.toggle('locked', data.isLocked);
+
+            // 5. Đồng bộ kích thước cửa sổ dựa trên vùng CROP hoặc vùng STRETCH
+            // Nếu có crop, cửa sổ phải nhỏ lại bằng đúng vùng crop
+            const finalW = data.crop ? data.crop.w : (data.width || img.naturalWidth);
+            const finalH = data.crop ? data.crop.h : (data.height || img.naturalHeight);
+
+            ipcRenderer.send('resize-overlay-window', { 
+                width: data.crop ? data.crop.w : (data.width || img.naturalWidth), 
+                height: data.crop ? data.crop.h : (data.height || img.naturalHeight),
+                scale: currentScale 
+            });
+        });
+
+        // Chuột phải để đóng nhanh
+        window.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            ipcRenderer.send('close-overlay');
+        });
+    </script>
+</body>
+</html>

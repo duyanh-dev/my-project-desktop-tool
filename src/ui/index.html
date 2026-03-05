@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="../styles/tutorial/tutorial.css">
     <link rel="stylesheet" href="../styles/visual-diff/visual-diff.css">
     <link rel="stylesheet" href="../styles/codeLab/codeLab.css">
+    <link rel="stylesheet" href="../styles/leaveHelper/leaveHelper.css">
+    <link rel="stylesheet" href="../styles/pixelPerfect/pixelPerfect.css">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
@@ -26,7 +28,9 @@
                 <div class="nav-item" id="nav-knotion" onclick="showTab('knotion')" title="Knotion"><i class="fa-solid fa-quote-left"></i></div>
                 <div class="nav-item" id="nav-clipboard" onclick="showTab('clipboard')" title="Clipboard Manager"><i class="fa-regular fa-clipboard"></i></div>
                 <!-- <div class="nav-item" id="nav-visual-diff" onclick="showTab('visual-diff')" title="UI Auditor"><i class="fa-solid fa-eye"></i></div> -->
+                <div class="nav-item" id="nav-pixel-perfect" onclick="showTab('pixel-perfect')" title="Pixel Perfect Overlay"><i class="fa-solid fa-layer-group"></i></div>
                 <div class="nav-item" id="nav-codelab" onclick="showTab('codelab')" title="CSS Code Lab"><i class="fa-solid fa-flask"></i></div>
+                <div class="nav-item" id="nav-leave-helper" onclick="showTab('leave-helper')" title="Smart Leave Assistant"><i class="fa-solid fa-calendar-check"></i></div>
                 <div class="nav-item" id="nav-feedback" onclick="showTab('feedback')" title="Feedback"><i class="fa-regular fa-comment-dots"></i></div>
                 <div class="nav-item" id="nav-settings" onclick="showTab('settings')" title="Settings"><i class="fa-solid fa-gear"></i></div>
             </div>
@@ -131,6 +135,16 @@
             <!-- tab visual diff -->
             <div id="tab-visual-diff" class="tab-content" style="display:none">
                 <div id="visual-diff-wrapper"></div>
+            </div>
+
+            <!-- tab pixel perfect -->
+            <div id="tab-pixel-perfect" class="tab-content" style="display:none">
+                <div id="pixel-perfect-wrapper" style="width: 100%;"></div>
+            </div>
+
+            <!-- tab leave helper -->
+            <div id="tab-leave-helper" class="tab-content" style="display:none; width: 100%;">
+                <div id="leave-helper-wrapper" style="width: 100%;"></div>
             </div>
 
             <!-- tab feedback -->
@@ -404,6 +418,8 @@
     <script src="../renderer/feedback.js"></script>
     <script src="../renderer/visual-diff.js"></script> 
     <script src="../renderer/codeLab.js"></script> 
+    <script src="../renderer/leaveHelper.js"></script> 
+    <script src="../renderer/pixelPerfect.js"></script> 
 
 </body>
 </html>

@@ -1,0 +1,143 @@
+<div class="pixel-perfect-container">
+    <header class="workspace-header">
+        <div class="header-main">
+            <i class="fa-solid fa-layer-group"></i>
+            <h1>Pixel Perfect Remote</h1>
+        </div>
+        <p class="sub-path">Điều khiển tấm phim điện tử đè lên trình duyệt bên ngoài</p>
+    </header>
+
+    <div class="pp-remote-layout">
+        <div class="pp-grid">
+            <div class="pp-card card">
+                <div class="card-label"><i class="fa-solid fa-image"></i> MOCKUP SOURCE</div>
+                
+                <div class="pp-upload-zone" id="pp-drop-zone">
+                    <div class="pp-upload-idle">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Tải ảnh thiết kế</span>
+                    </div>
+                    <div class="pp-upload-active" style="display: none;">
+                        <img id="pp-thumbnail" src="" alt="Thumbnail">
+                        <button class="pp-remove-btn" id="pp-btn-remove" title="Xoá ảnh hiện tại">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <input type="file" id="pp-file-input" hidden accept="image/*">
+                </div>
+            
+                <div class="or-divider"><span>OR</span></div>
+            
+                <div class="url-input-group">
+                    <input type="text" id="pp-url-input" class="pp-input" placeholder="Dán link ảnh / Figma...">
+                    <button class="mini-action-btn" id="pp-load-url" title="Load Mockup">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="pp-card card">
+                <div class="card-label"><i class="fa-solid fa-sliders"></i> ADJUSTMENTS</div>
+                <div class="range-group">
+                    <div class="range-header"><span>Opacity</span> <b id="val-opacity">50%</b></div>
+                    <input type="range" id="pp-range-opacity" min="0" max="100" value="50">
+                </div>
+                <div class="range-group">
+                    <div class="range-header"><span>Scale</span> <b id="val-scale">100%</b></div>
+                    <input type="range" id="pp-range-scale" min="10" max="200" value="100">
+                </div>
+                <div class="mode-switch">
+                    <button class="pp-mode-btn active" id="pp-mode-normal">Normal</button>
+                    <button class="pp-mode-btn" id="pp-mode-diff">Difference</button>
+                </div>
+            </div>
+
+            <div class="pp-card card">
+                <div class="card-label"><i class="fa-solid fa-arrows-up-down-left-right"></i> PRECISION</div>
+                <div class="nudge-center-wrapper">
+                    <div class="nudge-controls">
+                        <button class="nudge-btn" onclick="PixelPerfect.nudge('up')"><i class="fa-solid fa-chevron-up"></i></button>
+                        <div class="nudge-row">
+                            <button class="nudge-btn" onclick="PixelPerfect.nudge('left')"><i class="fa-solid fa-chevron-left"></i></button>
+                            <button class="nudge-btn btn-center" onclick="PixelPerfect.reCenter()" title="Center Mockup">
+                                <i class="fa-solid fa-crosshairs"></i>
+                            </button>
+                            <button class="nudge-btn" onclick="PixelPerfect.nudge('right')"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                        <button class="nudge-btn" onclick="PixelPerfect.nudge('down')"><i class="fa-solid fa-chevron-down"></i></button>
+                    </div>
+                </div>
+                <button class="action-btn full-width" id="pp-btn-lock">
+                    <i class="fa-solid fa-unlock"></i> <span>Lock & Pass-through</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="pp-preview-workspace card">
+            <div class="card-label">
+                <i class="fa-solid fa-crop-simple"></i> 
+                IMAGE EDITOR (INTERACTIVE CROP)
+                <div class="preview-zoom-ctrl">
+                    <span>Preview Zoom:</span>
+                    <input type="range" id="pp-preview-scale" min="10" max="100" value="50">
+                    <b id="val-preview-zoom">50%</b>
+                </div>
+            </div>
+            
+            <div class="editor-layout">
+                <div class="image-canvas-container" id="pp-canvas-viewport">
+                    <div id="pp-editor-wrapper" class="editor-wrapper">
+                        <img id="pp-preview-img" src="" alt="Editor Preview">
+                        
+                        <div id="pp-crop-backdrop" class="crop-backdrop"></div>
+                        
+                        <div id="pp-crop-box" class="crop-box">
+                            <div class="crop-info-badge"><span id="crop-w-badge">0</span> x <span id="crop-h-badge">0</span></div>
+                            
+                            <div class="crop-handle nw" data-handle="nw"></div>
+                            <div class="crop-handle n"  data-handle="n"></div>
+                            <div class="crop-handle ne" data-handle="ne"></div>
+                            <div class="crop-handle e"  data-handle="e"></div>
+                            <div class="crop-handle se" data-handle="se"></div>
+                            <div class="crop-handle s"  data-handle="s"></div>
+                            <div class="crop-handle sw" data-handle="sw"></div>
+                            <div class="crop-handle w"  data-handle="w"></div>
+                        </div>
+                    </div>
+                </div>
+        
+                <aside class="editor-sidebar">
+                    <div class="editor-group">
+                        <label>Crop Size (Target Area)</label>
+                        <div class="input-row">
+                            <input type="number" id="pp-crop-w" placeholder="Width">
+                            <span>x</span>
+                            <input type="number" id="pp-crop-h" placeholder="Height">
+                        </div>
+                        <p class="hint-text">Mẹo: Kéo khung ở bên trái để di chuyển vùng soi</p>
+                    </div>
+                    <div class="editor-group">
+                        <label>Cấu hình Editor</label>
+                        <button class="action-btn full-width btn-secondary" id="pp-editor-reset-all">
+                            <i class="fa-solid fa-rotate-left"></i> Reset Editor & Crop
+                        </button>
+                    </div>
+        
+                    <div class="editor-group">
+                        <label>Stretch Image (Bóp/Giãn gốc)</label>
+                        <div class="input-row">
+                            <input type="number" id="pp-edit-w" placeholder="W">
+                            <input type="number" id="pp-edit-h" placeholder="H">
+                        </div>
+                        <button class="mini-btn" id="pp-reset-size">Reset Original Size</button>
+                    </div>
+                </aside>
+            </div>
+        </div>
+
+        <div class="pp-footer">
+            <div class="hint-badge"><i class="fa-solid fa-keyboard"></i> Dùng phím mũi tên để nhích 1px</div>
+            <button class="btn-reset" id="pp-reset"><i class="fa-solid fa-power-off"></i> Close Overlay</button>
+        </div>
+    </div>
+</div>

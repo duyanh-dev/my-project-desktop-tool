@@ -1,0 +1,434 @@
+/* styles/visual-diff/pixel-perfect.css */
+.pp-remote-layout { padding: 20px; color: #e2e8f0; }
+
+.pp-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.pp-card {
+    padding: 16px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.card-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pp-upload-zone {
+    height: 80px;
+    border: 2px dashed #475569;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #94a3b8;
+}
+
+.pp-upload-zone:hover {
+    border-color: #6366f1;
+    color: #818cf8;
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.url-input-group {
+    display: flex;
+    gap: 5px;
+}
+
+.pp-input {
+    flex: 1;
+    background: #0f172a;
+    border: 1px solid #334155;
+    color: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.range-group { margin-bottom: 10px; }
+.range-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+.range-header b { color: #818cf8; }
+
+.mode-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    background: #0f172a;
+    padding: 3px;
+    border-radius: 8px;
+}
+
+.pp-mode-btn {
+    border: none;
+    background: transparent;
+    color: #64748b;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.pp-mode-btn.active { background: #334155; color: #fff; }
+
+/* Nudge & Center */
+.nudge-center-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.nudge-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.nudge-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.nudge-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nudge-btn:hover { background: #334155; color: #fff; }
+
+.btn-center {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: #6366f1;
+    color: #818cf8;
+}
+
+.btn-center:hover { background: #6366f1; color: #fff; }
+
+/* Footer */
+.pp-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #334155;
+    padding-top: 15px;
+}
+
+.hint-badge {
+    font-size: 11px;
+    color: #64748b;
+    background: #1e293b;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.btn-reset {
+    background: transparent;
+    border: none;
+    color: #f87171;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-reset:hover { color: #ef4444; }
+
+/* Styles cho vùng Upload mới */
+.pp-upload-zone {
+    position: relative;
+    height: 100px; /* Tăng nhẹ chiều cao */
+    overflow: hidden;
+}
+
+.pp-upload-active {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0f172a;
+}
+
+#pp-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Cắt ảnh vừa khít khung */
+    opacity: 0.6;
+    transition: 0.3s;
+}
+
+.pp-upload-active:hover #pp-thumbnail {
+    opacity: 0.3;
+    filter: blur(2px);
+}
+
+/* Nút X xoá ảnh */
+.pp-remove-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f87171;
+    color: white;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.pp-upload-active:hover .pp-remove-btn {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.pp-remove-btn:hover {
+    background: #ef4444;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+/* Thêm vào styles/visual-diff/pixel-perfect.css */
+@keyframes pulse-border {
+    0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+
+.pp-upload-active.new-load {
+    animation: pulse-border 1.5s ease-out;
+    border: 2px solid #6366f1;
+    border-radius: 8px;
+}
+
+.pp-preview-workspace { margin-top: 20px; padding: 20px; }
+
+.editor-layout {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 20px;
+    height: 350px;
+}
+
+.image-canvas-container {
+    background: #0f172a;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    border: 1px solid #334155;
+    position: relative;
+}
+
+.editor-canvas {
+    position: relative;
+    border: 1px dashed #6366f1;
+}
+
+#pp-preview-img {
+    display: block;
+    max-width: none; /* Cho phép bóp giãn theo thông số */
+}
+
+/* PREVIEW */
+
+.editor-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.editor-group label {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.input-row { display: flex; align-items: center; gap: 5px; }
+.input-row input {
+    width: 100%;
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: white;
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.crop-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.crop-row-mid { display: flex; align-items: center; gap: 5px; }
+.crop-grid input { width: 55px; text-align: center; background: #1e293b; border: 1px solid #334155; color: #fff; padding: 4px; border-radius: 4px; font-size: 11px; }
+
+.mini-btn {
+    margin-top: 8px;
+    background: #334155;
+    border: none;
+    color: #cbd5e1;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.preview-zoom-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    text-transform: none;
+    font-weight: normal;
+}
+
+.image-canvas-container {
+    display: flex;
+    align-items: center; /* Căn giữa dọc */
+    justify-content: center; /* Căn giữa ngang */
+    background-color: #0f172a;
+    overflow: hidden; /* Tránh shadow của crop-box tràn ra ngoài */
+    position: relative;
+    height: 400px; /* Hoặc chiều cao cố định của bạn */
+}
+
+.editor-wrapper {
+    position: relative;
+    /* Đổi origin về center để zoom không bị lệch */
+    transform-origin: center center; 
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+#pp-preview-img {
+    display: block;
+    max-width: none;
+    image-rendering: -webkit-optimize-contrast;
+}
+
+/* styles/visual-diff/pixel-perfect.css */
+
+.crop-box {
+    position: absolute;
+    border: 1px solid #6366f1;
+    box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.8);
+    cursor: move;
+    z-index: 10;
+}
+
+/* Style chung cho các điểm neo */
+.crop-handle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background-color: #6366f1;
+    border: 1px solid white;
+    box-sizing: border-box;
+    /* Thêm z-index để chắc chắn nó nằm trên crop-box */
+    z-index: 20; 
+}
+
+/* --- CSS TRICK: Tăng diện tích nhận diện chuột --- */
+.crop-handle::after {
+    content: '';
+    position: absolute;
+    /* Tạo một vùng trong suốt 24x24px xung quanh điểm neo 8x8px */
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
+    /* background: rgba(255, 0, 0, 0.3); -> Bỏ comment dòng này để debug xem vùng hit area */
+}
+
+/* Vị trí các góc */
+.crop-handle.nw { top: -4px; left: -4px; cursor: nw-resize; }
+.crop-handle.ne { top: -4px; right: -4px; cursor: ne-resize; }
+.crop-handle.sw { bottom: -4px; left: -4px; cursor: sw-resize; }
+.crop-handle.se { bottom: -4px; right: -4px; cursor: se-resize; }
+
+/* Vị trí các cạnh */
+.crop-handle.n { top: -4px; left: calc(50% - 4px); cursor: n-resize; }
+.crop-handle.s { bottom: -4px; left: calc(50% - 4px); cursor: s-resize; }
+.crop-handle.w { top: calc(50% - 4px); left: -4px; cursor: w-resize; }
+.crop-handle.e { top: calc(50% - 4px); right: -4px; cursor: e-resize; }
+
+.crop-box::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.crop-info-badge {
+    position: absolute;
+    top: -25px;
+    left: 0;
+    background: #6366f1;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.crop-box {
+    position: absolute;
+    /* Loại bỏ border nếu muốn vùng crop trông thật hơn khi bao trọn ảnh */
+    border: 2px solid #6366f1; 
+    /* Vùng làm mờ siêu rộng */
+    box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.7); 
+    cursor: move;
+    z-index: 10;
+    pointer-events: auto;
+}
+
+/* Khi khung crop bằng đúng kích thước ảnh, ẩn border đi cho đẹp */
+.crop-box.full-size {
+    border-color: transparent;
+}

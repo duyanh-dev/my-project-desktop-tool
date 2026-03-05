@@ -1,8 +1,12 @@
-const { app, BrowserWindow, ipcMain, dialog, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, globalShortcut, protocol } = require('electron');
 const path = require('path');
 const url = require('url');
 // require('./updater.js');
 require('dotenv').config(); 
+
+protocol.registerSchemesAsPrivileged([
+    { scheme: 'local-media', privileges: { standard: true, secure: true, supportFetchAPI: true } }
+  ]);
 
 const _segA = "Z2hwX2k3WElwOG4xV1oz";
 const _segB = "TlM3Ump3aHlueU1";
@@ -10,11 +14,9 @@ const _segC = "QYW52ZVZIMzFSUWFNag==";
 const REMOTE_SWITCH_URL = "https://gist.githubusercontent.com/Duyanh174/16618cfde1400e2135ce3efb33727a66/raw/license.json";
 
 function _getGatekeeperKey() {
-    // Ghép các mảnh lại rồi mới giải mã
     const fullSecret = _segA + _segB + _segC;
     return Buffer.from(fullSecret, 'base64').toString('utf8');
 }
-// --- CƠ CHẾ DỰ PHÒNG KHI BUILD APP ---
 if (!process.env.SUPABASE_KEY) {
     console.log("⚠️ Không tìm thấy file .env, đang nạp Key dự phòng...");
     
@@ -25,15 +27,14 @@ if (!process.env.SUPABASE_KEY) {
     process.env.CLOUDINARY_PRESET = "codepen_preset";
 }
 
-// Luôn đảm bảo GITHUB_TOKEN tồn tại kể cả khi có .env hay không
 if (!process.env.GITHUB_TOKEN) {
     process.env.GITHUB_TOKEN = _getGatekeeperKey();
 }
 
 ipcMain.handle('capture-page', async (event, url) => {
     const tempWin = new BrowserWindow({
-        width: 1920, // Giữ nguyên chiều rộng thiết kế
-        height: 1080, // Chiều cao tạm thời
+        width: 1920, 
+        height: 1080, 
         show: false,
         webPreferences: { offscreen: true }
     });
@@ -41,10 +42,8 @@ ipcMain.handle('capture-page', async (event, url) => {
     try {
         await tempWin.loadURL(url);
         
-        // 1. Đợi một chút để page nạp xong CSS/Fonts
         await new Promise(r => setTimeout(r, 2000));
 
-        // 2. PHÉP THUẬT Ở ĐÂY: Lấy chiều cao thực tế của toàn bộ trang web
         const fullHeight = await tempWin.webContents.executeJavaScript(`
             Math.max(
                 document.documentElement.scrollHeight,
@@ -53,14 +52,10 @@ ipcMain.handle('capture-page', async (event, url) => {
             );
         `);
 
-        // 3. Thay đổi kích thước cửa sổ ảo khớp 100% với chiều cao web
-        // Chúng ta set height mới, width giữ nguyên 1920
         tempWin.setBounds({ x: 0, y: 0, width: 1920, height: fullHeight });
 
-        // 4. Đợi thêm 500ms để trình duyệt render lại theo kích thước mới
         await new Promise(r => setTimeout(r, 500));
         
-        // 5. Chụp ảnh (Bây giờ nó sẽ chụp từ đầu đến chân trang)
         const image = await tempWin.webContents.capturePage();
         
         tempWin.close();
@@ -128,17 +123,15 @@ ipcMain.handle('supabase-request', async (event, { method, path, body }) => {
 });
 
 // 2. Handler upload ảnh lên Cloudinary
-// 2. Handler upload ảnh lên Cloudinary
 ipcMain.handle('cloudinary-upload', async (event, base64Image) => {
     try {
-        // Sử dụng FormData thay vì URLSearchParams
         const formData = new FormData();
-        formData.append("file", base64Image); // Cloudinary chấp nhận chuỗi base64 có prefix data:image/...
+        formData.append("file", base64Image); 
         formData.append("upload_preset", process.env.CLOUDINARY_PRESET);
 
         const response = await fetch(process.env.CLOUDINARY_URL, {
             method: "POST",
-            body: formData // Fetch sẽ tự động set Content-Type là multipart/form-data
+            body: formData 
         });
 
         const data = await response.json();
@@ -149,7 +142,7 @@ ipcMain.handle('cloudinary-upload', async (event, base64Image) => {
         }
 
         console.log("Upload thành công:", data.secure_url);
-        return data.secure_url; // Trả về URL trực tiếp nếu thành công
+        return data.secure_url; 
     } catch (e) {
         console.error("Lỗi kết nối Cloudinary:", e.message);
         return { error: e.message };
@@ -189,7 +182,7 @@ function createClipboardWindow() {
         width: 380,
         height: 600,
         frame: true,         // Thanh điều hướng mặc định
-        alwaysOnTop: true,
+        alwaysOnTop: false,
         title: "Clipboard Manager",
         backgroundColor: '#ffffff',
         webPreferences: {
@@ -208,7 +201,6 @@ function createClipboardWindow() {
     clipboardWindow.loadURL(startUrl);
 
     clipboardWindow.on('closed', () => {
-        // FIX LỖI 2: Kiểm tra mainWindow còn sống không trước khi send
         if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.webContents.send('clipboard-window-status', false);
         }
@@ -216,7 +208,6 @@ function createClipboardWindow() {
     });
 }
 
-// Lắng nghe sự kiện toggle từ Renderer
 ipcMain.on('toggle-clipboard-window', (event, isWindow) => {
     if (isWindow) {
         createClipboardWindow();
@@ -246,13 +237,23 @@ ipcMain.handle('select-folder', async () => {
 
 app.whenReady().then(async () => {
 
-    // Chạy kiểm tra 2 lớp
+    protocol.registerFileProtocol('local-media', (request, callback) => {
+        const url = request.url.replace('local-media://', '');
+        const decodedPath = decodeURIComponent(url);
+        
+        try {
+            return callback({ path: path.normalize(decodedPath) });
+        } catch (error) {
+            console.error('Protocol Error:', error);
+        }
+    });
+
     const check = await validateGatekeeper();
 
     if (!check.valid) {
         dialog.showErrorBox(
             "Thông báo hệ thống", 
-            check.msg // Hiện lỗi cụ thể: sai token, bị khoá, hoặc mất mạng
+            check.msg 
         );
         app.quit();
         return;
@@ -260,16 +261,127 @@ app.whenReady().then(async () => {
 
     createWindow();
 
-    // FIX LỖI 1: Phím tắt Control + Command + V
     globalShortcut.register('CommandOrControl+Control+V', () => {
         createClipboardWindow();
         
-        // Kiểm tra an toàn trước khi cập nhật Switch ở mainWindow
         if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.webContents.send('clipboard-window-status', true);
         }
     });
 });
+
+// layer ảnh 
+let overlayWindow = null;
+let originalSize = { width: 0, height: 0 }; 
+
+ipcMain.handle('select-file', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openFile'],
+        filters: [{ name: 'Images', extensions: ['jpg', 'png', 'gif', 'jpeg', 'webp'] }]
+    });
+    if (canceled) return null;
+    return filePaths[0]; 
+});
+
+
+ipcMain.handle('open-overlay', async (event, imageSrc) => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.webContents.send('update-overlay', { src: imageSrc });
+        return true;
+    }
+
+    overlayWindow = new BrowserWindow({
+        width: 800, 
+        height: 600,
+        frame: false,
+        transparent: true,
+        alwaysOnTop: true,
+        resizable: true, 
+        skipTaskbar: true, 
+        focusable: false,
+        hasShadow: false,
+        enableLargerThanScreen: true,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            webSecurity: false
+        }
+    });
+    overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+    if (process.platform === 'darwin') {
+        overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    }
+
+    overlayWindow.loadFile(path.join(__dirname, '../ui/features/overlay-window.html'));
+
+    overlayWindow.webContents.on('did-finish-load', () => {
+        overlayWindow.webContents.send('update-overlay', { src: imageSrc });
+    });
+
+    overlayWindow.on('closed', () => { overlayWindow = null; });
+    return true;
+});
+
+ipcMain.on('close-overlay', () => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.close(); 
+        overlayWindow = null;
+    }
+});
+
+ipcMain.on('resize-overlay-window', (event, { width, height, scale }) => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        if (width && height) originalSize = { width, height };
+        
+        const newWidth = Math.round(originalSize.width * scale);
+        const newHeight = Math.round(originalSize.height * scale);
+        
+        overlayWindow.setSize(newWidth, newHeight);
+    }
+});
+
+ipcMain.on('center-overlay', () => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.center(); // Đưa về giữa màn hình chính
+        // Hoặc có thể set tọa độ tuyệt đối để thoát khỏi vùng kẹt:
+        // overlayWindow.setPosition(pos[0], 50); 
+    }
+});
+
+ipcMain.on('nudge-overlay', (event, direction) => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        const pos = overlayWindow.getPosition();
+        const step = 1;
+        if (direction === 'up') overlayWindow.setPosition(pos[0], pos[1] - step);
+        if (direction === 'down') overlayWindow.setPosition(pos[0], pos[1] + step);
+        if (direction === 'left') overlayWindow.setPosition(pos[0] - step, pos[1]);
+        if (direction === 'right') overlayWindow.setPosition(pos[0] + step, pos[1]);
+    }
+});
+
+ipcMain.on('control-overlay', (event, data) => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.webContents.send('update-overlay', data);
+    }
+});
+
+ipcMain.on('set-ignore-mouse', (event, ignore) => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.setIgnoreMouseEvents(ignore, { forward: true });
+    }
+});
+
+ipcMain.on('close-overlay', () => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+        overlayWindow.close();
+        overlayWindow = null;
+    }
+    
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('overlay-closed-sync');
+    }
+});
+
 
 app.on('will-quit', () => {
     globalShortcut.unregisterAll();
