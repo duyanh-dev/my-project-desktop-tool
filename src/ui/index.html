@@ -11,6 +11,10 @@
     <link rel="stylesheet" href="../styles/clipboard/clipboard.css">
     <link rel="stylesheet" href="../styles/feedback/feedback.css">
     <link rel="stylesheet" href="../styles/tutorial/tutorial.css">
+    <link rel="stylesheet" href="../styles/visual-diff/visual-diff.css">
+    <link rel="stylesheet" href="../styles/codeLab/codeLab.css">
+    <link rel="stylesheet" href="../styles/leaveHelper/leaveHelper.css">
+    <link rel="stylesheet" href="../styles/pixelPerfect/pixelPerfect.css">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
@@ -23,8 +27,15 @@
                 <div class="nav-item" id="nav-format" onclick="showTab('format')" title="Format Code"><i class="fa-solid fa-broom"></i></div>
                 <div class="nav-item" id="nav-knotion" onclick="showTab('knotion')" title="Knotion"><i class="fa-solid fa-quote-left"></i></div>
                 <div class="nav-item" id="nav-clipboard" onclick="showTab('clipboard')" title="Clipboard Manager"><i class="fa-regular fa-clipboard"></i></div>
+                <!-- <div class="nav-item" id="nav-visual-diff" onclick="showTab('visual-diff')" title="UI Auditor"><i class="fa-solid fa-eye"></i></div> -->
+                <!-- <div class="nav-item" id="nav-pixel-perfect" onclick="showTab('pixel-perfect')" title="Pixel Perfect Overlay"><i class="fa-solid fa-layer-group"></i></div> -->
+                <div class="nav-item" id="nav-codelab" onclick="showTab('codelab')" title="CSS Code Lab"><i class="fa-solid fa-flask"></i></div>
+                <div class="nav-item" id="nav-leave-helper" onclick="showTab('leave-helper')" title="Smart Leave Assistant"><i class="fa-solid fa-calendar-check"></i></div>
                 <div class="nav-item" id="nav-feedback" onclick="showTab('feedback')" title="Feedback"><i class="fa-regular fa-comment-dots"></i></div>
                 <div class="nav-item" id="nav-settings" onclick="showTab('settings')" title="Settings"><i class="fa-solid fa-gear"></i></div>
+            </div>
+            <div class="nav-version">
+                <span id="display-app-version">v1.1.0</span>
             </div>
         </nav>
     
@@ -116,6 +127,26 @@
                     </div>
             </div>
 
+            <!-- tab codeLab -->
+            <div id="tab-codelab" class="tab-content" style="display:none">
+                <div id="codelab-container" class="codelab-wrapper"></div>
+            </div>
+
+            <!-- tab visual diff -->
+            <div id="tab-visual-diff" class="tab-content" style="display:none">
+                <div id="visual-diff-wrapper"></div>
+            </div>
+
+            <!-- tab pixel perfect -->
+            <div id="tab-pixel-perfect" class="tab-content" style="display:none">
+                <div id="pixel-perfect-wrapper" style="width: 100%;"></div>
+            </div>
+
+            <!-- tab leave helper -->
+            <div id="tab-leave-helper" class="tab-content" style="display:none; width: 100%;">
+                <div id="leave-helper-wrapper" style="width: 100%;"></div>
+            </div>
+
             <!-- tab feedback -->
             <div id="tab-feedback" class="tab-content" style="display:none">
                 <div id="feedback-container" class="feedback-wrapper">
@@ -133,6 +164,7 @@
                         <!-- <button class="mod-btn" onclick="showModuleSettings('overlay', event)">Overlay</button>
                         <button class="mod-btn" onclick="showModuleSettings('ruler', event)">Ruler</button> -->
                         <button class="mod-btn" onclick="showModuleSettings('tutorial', event)">Tutorial</button>
+                        <button class="mod-btn" onclick="showModuleSettings('update', event)">Update</button>
                     </div>
                     
                     <div id="mod-settings-convert" class="mod-settings-panel">
@@ -298,6 +330,18 @@
                             </div>
                         </div>
                     </div>
+                    <!-- <div id="mod-settings-update" class="mod-settings-panel" style="display:none">
+                        <div class="card config-card update-card" id="update-section" style="display: none; border: 1px solid #34d399; background: rgba(52, 211, 153, 0.05);">
+                            <h3 class="card-title" style="color: #34d399;"><i class="fa-solid fa-cloud-arrow-down"></i> New Update Available!</h3>
+                            <div class="switch-container">
+                                <div class="switch-info">
+                                    <div class="sw-title" id="update-version-text">Version 1.2.2 is ready</div>
+                                    <div class="sw-desc" id="update-msg-text">Bấm nút bên cạnh để tự động nâng cấp hệ thống.</div>
+                                </div>
+                                <button class="action-btn btn-success" id="btn-do-update" onclick="handleUpdate()">Update Now</button>
+                            </div>
+                        </div>
+                    </div> -->
                 </div>
             </div>
         </main>
@@ -364,6 +408,7 @@
         event.currentTarget.classList.add('active');
     }
 </script>
+    <!-- <script src="../renderer/updater-ui.js"></script> -->
     <script src="../renderer/moodFlow.js"></script>
     <script src="../renderer/renderer.js"></script>
     <script src="../renderer/codepen.js" ></script>
@@ -371,6 +416,10 @@
     <script src="../renderer/knotion.js"></script>
     <script src="../renderer/clipboard.js"></script>
     <script src="../renderer/feedback.js"></script>
+    <!-- <script src="../renderer/visual-diff.js"></script>  -->
+    <script src="../renderer/codeLab.js"></script> 
+    <script src="../renderer/leaveHelper.js"></script> 
+    <!-- <script src="../renderer/pixelPerfect.js"></script>  -->
 
 </body>
 </html>

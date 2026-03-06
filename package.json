@@ -1,6 +1,6 @@
 {
   "name": "DA-tool-suite",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Anh Bui",
   "description": "Professional Sass Compiler and QC Tool",
   "main": "src/main/index.js",
@@ -54,10 +54,13 @@
   "dependencies": {
     "acorn": "^8.15.0",
     "acorn-walk": "^8.3.4",
+    "adm-zip": "^0.5.16",
     "autoprefixer": "^10.4.23",
+    "axios": "^1.13.4",
     "chokidar": "latest",
     "dotenv": "^17.2.3",
     "monaco-editor": "^0.55.1",
+    "pixelmatch": "^5.3.0",
     "postcss": "^8.5.6",
     "sass": "latest",
     "ws": "latest"

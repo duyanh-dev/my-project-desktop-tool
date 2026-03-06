@@ -1,0 +1,144 @@
+<div class="cl-wrapper">
+    <section class="cl-preview-section">
+        <div class="cl-canvas" id="cl-canvas">
+            <div class="cl-canvas-decor">
+                <div class="cl-blob cl-blob-1"></div>
+                <div class="cl-blob cl-blob-2"></div>
+                <div class="cl-blob cl-blob-3"></div>
+            </div>
+            <div class="cl-clippy-wrapper" id="cl-clippy-wrapper">
+                <div id="cl-shadow-container" class="cl-shadow-container">
+                    <div id="cl-target"></div>
+                </div>
+                <div id="cl-handle-layer" class="cl-handle-layer"></div>
+            </div>
+        </div>
+    </section>
+
+    <aside class="cl-sidebar">
+        <div class="cl-sidebar-content">
+            
+            <div class="cl-card">
+                <header class="cl-card-header"><i class="fa-solid fa-vector-square"></i> Canvas & Background</header>
+                <div class="cl-input-row">
+                    <div class="cl-input-group"><label>Width</label><input type="number" id="cl-width" value="320"></div>
+                    <div class="cl-input-group"><label>Height</label><input type="number" id="cl-height" value="320"></div>
+                    <div class="cl-input-group"><label>Canvas BG</label><input type="color" id="cl-bg-picker" value="#f8fafc"></div>
+                </div>
+            </div>
+
+            <div class="cl-card">
+                <header class="cl-card-header"><i class="fa-solid fa-palette"></i> Multi-Gradient Colors</header>
+                <div id="cl-gradient-list" class="cl-gradient-list"></div>
+                <button class="cl-add-btn" onclick="addColorStop()"><i class="fa-solid fa-plus"></i> Add Color Stop</button>
+                <div class="cl-control" style="margin-top: 12px;">                    
+                        <div class="cl-label">
+                            <span>Angle</span> 
+                            <div>
+                                <span id="val-grad-angle">45</span>
+                                <span>°</span>
+                            </div>
+                        </div>
+                        <input type="range" id="grad-angle" min="0" max="360" value="45">
+                </div>
+            </div>
+
+            <div class="cl-card">
+                <header class="cl-card-header"><i class="fa-solid fa-layer-group"></i> Glassmorphism</header>
+                <div class="cl-input-row">
+                    <div class="cl-input-group">
+                        <label>Blur: <span id="val-blur">10</span>px</label>
+                        <input type="range" id="glass-blur" min="0" max="40" value="10">
+                    </div>
+                    <div class="cl-input-group">
+                        <label>Opacity: <span id="val-opacity">0.2</span></label>
+                        <input type="range" id="glass-opacity" min="0" max="1" step="0.01" value="0.2">
+                    </div>
+                </div>
+            </div>
+
+            <div class="cl-card">
+                <header class="cl-card-header"><i class="fa-solid fa-wand-magic-sparkles"></i> Shadow Details</header>
+                <div class="cl-input-row">
+                    <div class="cl-input-group"><label>Offset X</label><input type="number" id="shadow-x" value="0"></div>
+                    <div class="cl-input-group"><label>Offset Y</label><input type="number" id="shadow-y" value="20"></div>
+                </div>
+                <div class="cl-input-row">
+                    <div class="cl-input-group">
+                        <label>Shadow Blur</label>
+                        <input type="range" id="shadow-blur" min="0" max="100" value="30">
+                    </div>
+                    <div class="cl-input-group">
+                        <label>Intensity</label>
+                        <input type="range" id="shadow-opacity" min="0" max="1" step="0.05" value="0.4">
+                    </div>
+                </div>
+            </div>
+
+            <div class="cl-card">
+                <header class="cl-card-header"><i class="fa-solid fa-microchip"></i> Shape Engine V2</header>
+                
+                <div class="cl-input-row" style="margin-bottom: 15px;">
+                    <select id="cl-engine-mode" class="cl-select">
+                        <option value="manual">Manual Edit (Dots)</option>
+                        <option value="wavy">Wavy / Curve</option>
+                        <option value="rounded">Rounded Polygon</option>
+                        <option value="flower">Flower / Petals</option> <option value="burst">Starburst</option> </select>
+                    <button class="cl-reset-btn" onclick="resetShape()" title="Reset Shape"><i class="fa-solid fa-rotate-left"></i></button>
+                </div>
+            
+                <div id="cl-procedural-controls" style="display: none; border-top: 1px solid #2d333b; padding-top: 10px;">
+                    <div class="cl-control">
+                        <div class="cl-label"><span>Points / Waves</span> <span id="val-shape-points">8</span></div>
+                        <input type="range" id="cl-shape-points" min="3" max="50" value="8">
+                    </div>
+                    <div class="cl-control">
+                        <div class="cl-label"><span>Curvature / Depth</span> <span id="val-shape-depth">10</span>%</div>
+                        <input type="range" id="cl-shape-depth" min="-50" max="50" value="10">
+                    </div>
+                    <div class="cl-control">
+                        <div class="cl-label"><span>Roundness</span> <span id="val-shape-round">0</span></div>
+                        <input type="range" id="cl-shape-round" min="0" max="100" value="50">
+                    </div>
+                </div>
+
+                <div class="cl-advanced-shape-tools" style="border-top: 1px solid #2d333b; margin-top: 10px; padding-top: 10px;">
+                    <div class="cl-control">
+                        <div class="cl-label"><span>Shape Rotation</span> <span id="val-shape-rotate">0</span>°</div>
+                        <input type="range" id="cl-shape-rotate" min="0" max="360" value="0">
+                    </div>
+                    <div class="cl-control">
+                        <label style="font-size: 11px; cursor: pointer; color: #adbac7;">
+                            <input type="checkbox" id="cl-invert-shape"> Invert Shape (Cut Outside)
+                        </label>
+                    </div>
+                </div>
+            
+                <div id="cl-manual-controls">
+                    <select id="clip-shape" class="cl-select">
+                        <option value="polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)">Square</option>
+                        <option value="polygon(50% 0%, 0% 100%, 100% 100%)">Triangle</option>
+                        <option value="polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)">Hexagon</option>
+                    </select>
+                </div>
+            
+                <div class="cl-extra-toggles" style="margin-top: 15px;">
+                    <label style="font-size: 11px; cursor: pointer;">
+                        <input type="checkbox" id="cl-show-decor" > Show Background Blobs
+                    </label>
+                </div>
+            </div>
+
+            <div class="cl-code-section">
+                <div class="cl-code-tabs">
+                    <button class="cl-code-btn active" data-mode="css" onclick="switchCode('css')">CSS</button>
+                    <button class="cl-code-btn" data-mode="html" onclick="switchCode('html')">HTML</button>
+                    <button class="cl-copy-btn" onclick="copyCode()"><i class="fa-regular fa-copy"></i> Copy</button>
+                </div>
+                <div class="cl-code-display">
+                    <pre id="cl-code-output"><code></code></pre>
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>

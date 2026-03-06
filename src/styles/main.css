@@ -839,3 +839,31 @@ body {
     flex-direction: column;
     gap: 2px;
 }
+
+/* Style cho số Version ở Sidebar */
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Đẩy nav-group lên trên, nav-version xuống dưới */
+    padding-bottom: 15px;
+}
+
+.nav-version {
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-dim, #666);
+    font-weight: bold;
+    opacity: 0.6;
+    letter-spacing: 0.5px;
+}
+
+/* Style cho số Version ở Header (nếu dùng vị trí 2) */
+.version-label {
+    font-size: 11px;
+    color: #4b5563;
+    background: #1f2937;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right: 10px;
+    border: 1px solid #374151;
+}
