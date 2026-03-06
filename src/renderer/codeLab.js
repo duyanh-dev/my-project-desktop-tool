@@ -6,6 +6,9 @@ window.initCodeLab = () => {
     const gradList = document.getElementById('cl-gradient-list');
     const container = document.getElementById('tab-codelab');
 
+    let startMouseDist = 0;
+    let startRadius = 0;
+
     if (!container || !target || !wrapper || !shadowContainer) return;
 
     let currentMode = 'css';
@@ -66,7 +69,6 @@ window.initCodeLab = () => {
         const d1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
         const d2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
         
-        // Giới hạn bán kính không vượt quá nửa cạnh ngắn nhất
         const r = Math.min(radius / 2, d1 / 2, d2 / 2);
 
         const start = { x: p2.x + v1.x / d1 * r, y: p2.y + v1.y / d1 * r };
@@ -78,11 +80,10 @@ window.initCodeLab = () => {
             const t = i / steps;
             let cx, cy;
             
-            if (type === 1) { // Bo ngoài (Convex) - Quadratic Bezier
+            if (type === 1) { 
                 cx = (1 - t) * (1 - t) * start.x + 2 * (1 - t) * t * p2.x + t * t * end.x;
                 cy = (1 - t) * (1 - t) * start.y + 2 * (1 - t) * t * p2.y + t * t * end.y;
-            } else { // Bo trong (Concave/Inverted)
-                // Lấy trung điểm của dây cung để làm tâm đảo ngược
+            } else { 
                 const midX = (start.x + end.x) / 2;
                 const midY = (start.y + end.y) / 2;
                 const invX = p2.x + (midX - p2.x) * 2;
@@ -94,6 +95,93 @@ window.initCodeLab = () => {
         }
         return arcPoints;
     };
+
+    let draggingRadiusIdx = null;
+
+    // Hàm tính toán đường dẫn SVG (d path) cho góc bo
+    const getArcPath = (p1, p2, p3, radius, type) => {
+        const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
+        const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
+        const d1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y) || 1;
+        const d2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y) || 1;
+        
+        const r = Math.min(radius / 2, d1 / 1.2, d2 / 1.2);
+    
+        const bisectX = (v1.x / d1 + v2.x / d2);
+        const bisectY = (v1.y / d1 + v2.y / d2);
+        const bisectLen = Math.sqrt(bisectX * bisectX + bisectY * bisectY) || 1;
+        
+        const gap = 1.5; 
+        const offsetX = (bisectX / bisectLen) * gap;
+        const offsetY = (bisectY / bisectLen) * gap;
+    
+        const start = { x: p2.x + v1.x / d1 * r + offsetX, y: p2.y + v1.y / d1 * r + offsetY };
+        const end = { x: p2.x + v2.x / d2 * r + offsetX, y: p2.y + v2.y / d2 * r + offsetY };
+        let cp = { x: p2.x + offsetX, y: p2.y + offsetY };
+    
+        if (type === 2) {
+            const midX = (start.x + end.x) / 2;
+            const midY = (start.y + end.y) / 2;
+            cp.x = cp.x + (midX - cp.x) * 2;
+            cp.y = cp.y + (midY - cp.y) * 2;
+        }
+    
+        return `M ${start.x},${start.y} Q ${cp.x},${cp.y} ${end.x},${end.y}`;
+    };
+
+    function handleRadiusMove(e) {
+        if (draggingRadiusIdx === null) return;
+        
+        const rect = wrapper.getBoundingClientRect();
+        const pt = points[draggingRadiusIdx];
+        
+        const mouseX = ((e.clientX - rect.left) / rect.width) * 100;
+        const mouseY = ((e.clientY - rect.top) / rect.height) * 100;
+        
+        const currentDist = Math.sqrt(Math.pow(mouseX - pt.x, 2) + Math.pow(mouseY - pt.y, 2));
+        
+        const delta = currentDist - startMouseDist;
+        
+        const sensitivity = (pt.t === 1) ? 3.8 : 2.0;
+        
+        let newR = startRadius + (delta * sensitivity);
+    
+        newR = Math.min(100, Math.max(0, newR));
+    
+        if (Math.abs(pt.r - newR) > 0.01) {
+            points[draggingRadiusIdx].r = newR;
+    
+            const slider = document.getElementById('cl-node-r');
+            if (slider) slider.value = newR;
+            const label = document.getElementById('val-node-r');
+            if (label) label.innerText = Math.round(newR);
+    
+            const activeGroup = document.querySelector('.cl-corner-handle-group.active-drag');
+            if (activeGroup) {
+                const arc = activeGroup.querySelector('.cl-corner-arc');
+                const hit = activeGroup.querySelector('.cl-corner-hit-area');
+                const prev = points[(draggingRadiusIdx - 1 + points.length) % points.length];
+                const next = points[(draggingRadiusIdx + 1) % points.length];
+                
+                const d = getArcPath(prev, pt, next, newR, pt.t);
+                arc.setAttribute('d', d);
+                hit.setAttribute('d', d);
+            }
+    
+            updateAll();
+        }
+    }
+    
+    function handleRadiusUp() {
+        const lastDraggedIdx = draggingRadiusIdx;
+        
+        draggingRadiusIdx = null;
+        
+        window.removeEventListener('mousemove', handleRadiusMove);
+        window.removeEventListener('mouseup', handleRadiusUp);
+ 
+        renderHandles();
+    }
 
     // --- GRADIENT SYSTEM ---
     window.renderColorStops = () => {
@@ -146,7 +234,6 @@ window.initCodeLab = () => {
         const rotate = getInt('cl-shape-rotate');
         const isInverted = document.getElementById('cl-invert-shape')?.checked;
     
-        // BƯỚC 1: TÍNH TOÁN TẬP ĐIỂM CHI TIẾT (Xử lý bo góc nếu là manual)
         let basePts = [];
         if (engineMode === 'manual') {
             for (let i = 0; i < points.length; i++) {
@@ -154,34 +241,28 @@ window.initCodeLab = () => {
                 const curr = points[i];
                 const next = points[(i + 1) % points.length];
                 
-                // Lấy các điểm tạo thành góc bo
                 const cornerPoints = computeCorner(prev, curr, next, curr.r || 0, curr.t || 0);
                 basePts.push(...cornerPoints);
             }
         } else {
-            // Chế độ tự động (Wavy, Flower...)
             basePts = generateProceduralPoints(engineMode, numPoints, depth, roundness);
         }
     
-        // BƯỚC 2: XOAY TỌA ĐỘ TRÊN TẬP ĐIỂM ĐÃ TÍNH TOÁN
         const rad = (rotate * Math.PI) / 180;
         const finalPoints = basePts.map(p => ({
             x: ((p.x - 50) * Math.cos(rad) - (p.y - 50) * Math.sin(rad) + 50).toFixed(2),
             y: ((p.x - 50) * Math.sin(rad) + (p.y - 50) * Math.cos(rad) + 50).toFixed(2)
         }));
     
-        // BƯỚC 3: TẠO CHUỖI POLYGON (Xử lý cả trường hợp Invert)
         let finalClipPath = "";
         const pathString = finalPoints.map(p => `${p.x}% ${p.y}%`).join(', ');
     
         if (isInverted) {
-            // Vẽ khung bao ngoài rồi vẽ ngược vào trong để tạo lỗ hổng
             finalClipPath = `polygon(0% 0%, 0% 100%, 100% 100%, 100% 0%, 0% 0%, ${pathString}, ${finalPoints[0].x}% ${finalPoints[0].y}%)`;
         } else {
             finalClipPath = `polygon(${pathString})`;
         }
     
-        // BƯỚC 4: CẬP NHẬT GIAO DIỆN ĐIỀU KHIỂN (Visibility)
         if (engineMode === 'manual') {
             handleLayer.style.display = 'block';
             document.getElementById('cl-manual-controls').style.display = 'block';
@@ -191,14 +272,12 @@ window.initCodeLab = () => {
             document.getElementById('cl-manual-controls').style.display = 'none';
             document.getElementById('cl-procedural-controls').style.display = 'block';
             
-            // Cập nhật nhãn số liệu cho Procedural
             const updateLabel = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
             updateLabel('val-shape-points', numPoints);
             updateLabel('val-shape-depth', depth);
             updateLabel('val-shape-round', roundness);
         }
     
-        // BƯỚC 5: APPLY STYLE VÀO PHẦN TỬ HIỂN THỊ
         const canvas = document.querySelector('.cl-canvas');
         if (canvas) canvas.style.backgroundColor = canvasBg;
     
@@ -208,10 +287,8 @@ window.initCodeLab = () => {
         wrapper.style.width = `${w}px`;
         wrapper.style.height = `${h}px`;
         
-        // Áp dụng Drop Shadow lên Container
         shadowContainer.style.filter = `drop-shadow(${shadX}px ${shadY}px ${shadBlur}px rgba(0, 0, 0, ${shadOp}))`;
     
-        // Áp dụng Glassmorphism lên Target
         const rgbaStops = gradientStops.map(color => hexToRgba(color, gOp)).join(', ');
         target.style.background = `linear-gradient(${angle}deg, ${rgbaStops})`;
         target.style.backdropFilter = `blur(${blur}px)`;
@@ -220,13 +297,11 @@ window.initCodeLab = () => {
         target.style.webkitClipPath = finalClipPath;
         target.style.border = `1px solid rgba(255, 255, 255, ${gOp})`;
     
-        // Cập nhật nhãn thông số chung
         document.getElementById('val-shape-rotate').innerText = rotate;
         document.getElementById('val-blur').innerText = blur;
         document.getElementById('val-opacity').innerText = gOp;
         document.getElementById('val-grad-angle').innerText = angle;
     
-        // Xuất mã code ra panel
         renderCodeOutput(w, h, angle, blur, gOp, shadX, shadY, shadBlur, shadOp, finalClipPath, engineMode, numPoints, depth);
     }
 
@@ -256,9 +331,55 @@ window.initCodeLab = () => {
 
     window.renderHandles = () => {
         handleLayer.innerHTML = '';
+        const svgLayer = document.getElementById('cl-svg-handles');
+        if (svgLayer) svgLayer.innerHTML = ''; 
+    
         const menu = document.getElementById('cl-node-menu');
 
         points.forEach((pt, idx) => {
+
+            if (pt.t > 0 && svgLayer) {
+                const prev = points[(idx - 1 + points.length) % points.length];
+                const next = points[(idx + 1) % points.length];
+                const pathData = getArcPath(prev, pt, next, pt.r || 0, pt.t);
+    
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute("class", "cl-corner-handle-group");
+                
+                if (draggingRadiusIdx === idx) {
+                    g.classList.add('active-drag');
+                }
+    
+                const arc = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                arc.setAttribute("d", pathData);
+                arc.setAttribute("class", "cl-corner-arc");
+                
+                const hitArea = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                hitArea.setAttribute("d", pathData);
+                hitArea.setAttribute("class", "cl-corner-hit-area");
+    
+                hitArea.onmousedown = (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    draggingRadiusIdx = idx;
+                    
+                    const rect = wrapper.getBoundingClientRect();
+                    const pt = points[idx];
+                    const mouseX = ((e.clientX - rect.left) / rect.width) * 100;
+                    const mouseY = ((e.clientY - rect.top) / rect.height) * 100;
+                    
+                    startMouseDist = Math.sqrt(Math.pow(mouseX - pt.x, 2) + Math.pow(mouseY - pt.y, 2));
+                    startRadius = pt.r || 0; 
+                
+                    renderHandles(); 
+                    window.addEventListener('mousemove', handleRadiusMove);
+                    window.addEventListener('mouseup', handleRadiusUp);
+                };
+    
+                g.appendChild(arc);
+                g.appendChild(hitArea);
+                svgLayer.appendChild(g);
+            }
+
             const dot = document.createElement('div');
             dot.className = `cl-dot ${editingIdx === idx ? 'active' : ''}`;
             dot.style.left = `${pt.x}%`;
@@ -301,12 +422,16 @@ window.initCodeLab = () => {
         updateAll();
     };
     
-    // Các hàm điều khiển Node
     window.setNodeType = (type) => {
         if (editingIdx !== null) {
             points[editingIdx].t = type;
-            if (type > 0 && !points[editingIdx].r) points[editingIdx].r = 20; // Default radius
-            updateAll();
+            if (type > 0) {
+                points[editingIdx].r = points[editingIdx].r || 20; 
+            } else {
+                points[editingIdx].r = 0;
+            }
+            
+            renderHandles(); 
             openCornerEdit(editingIdx);
         }
     };
@@ -324,12 +449,14 @@ window.initCodeLab = () => {
         }
     };
     
-    // Lắng nghe sự kiện slider bán kính riêng của từng node
     document.getElementById('cl-node-r').oninput = function() {
         if (editingIdx !== null) {
-            points[editingIdx].r = this.value;
-            document.getElementById('val-node-r').innerText = this.value;
-            updateAll();
+            points[editingIdx].r = parseFloat(this.value);
+            
+            const label = document.getElementById('val-node-r');
+            if (label) label.innerText = this.value;
+            
+            renderHandles(); 
         }
     };
 
@@ -419,7 +546,17 @@ window.initCodeLab = () => {
         }
     };
 
-    container.querySelectorAll('input, select').forEach(i => i.addEventListener('input', updateAll));
+    container.querySelectorAll('input, select').forEach(i => {
+        i.addEventListener('input', () => {
+            if (i.id === 'cl-node-r') return;
+            
+            if (i.id === 'cl-engine-mode' || i.id === 'grad-angle' || i.type === 'color') {
+                renderHandles();
+            } else {
+                updateAll();
+            }
+        });
+    });
     renderColorStops();
     renderHandles();
 };
