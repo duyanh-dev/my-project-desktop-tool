@@ -443,16 +443,17 @@ input[type=number]:focus {
 
 /* Menu nổi khi click vào chấm tròn */
 .cl-node-menu {
-    position: absolute;
+    position: fixed;
     display: none;
     background: #1c2128;
     border: 1px solid #444c56;
     border-radius: 8px;
-    padding: 5px;
-    gap: 5px;
-    z-index: 1000;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    transform: translate(-50%, -120%);
+    padding: 6px;
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    z-index: 9999;
+    /* Tạo vùng đệm phía dưới để di chuột lên không bị mất */
+    margin-top: -5px; 
 }
 
 .cl-node-menu button {
@@ -463,6 +464,14 @@ input[type=number]:focus {
     border-radius: 4px;
     font-size: 11px;
     cursor: pointer;
+}
+.cl-node-menu::before {
+    content: '';
+    position: absolute;
+    bottom: -15px; /* Vùng đệm 15px nối liền với chấm tròn */
+    left: 0;
+    right: 0;
+    height: 20px;
 }
 
 .cl-node-menu button:hover { background: #535bf2; }

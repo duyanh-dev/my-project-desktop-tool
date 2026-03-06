@@ -9,8 +9,13 @@ window.initCodeLab = () => {
     if (!container || !target || !wrapper || !shadowContainer) return;
 
     let currentMode = 'css';
-    let points = [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }, { x: 0, y: 100 }];
-    let gradientStops = ['#6366f1', '#a855f7']; 
+    let points = [
+        { x: 0, y: 0, r: 0, t: 0 }, 
+        { x: 100, y: 0, r: 0, t: 0 }, 
+        { x: 100, y: 100, r: 0, t: 0 }, 
+        { x: 0, y: 100, r: 0, t: 0 }
+    ];
+    let gradientStops = ['#6366f1', '#a855f7'];
     let draggingIdx = null;
 
     // --- HELPER FUNCTIONS ---
@@ -21,7 +26,6 @@ window.initCodeLab = () => {
         return `rgba(${+r}, ${+g}, ${+b}, ${opacity})`;
     };
 
-    // Hàm tạo hình Wavy/Curve dựa trên lượng giác
     const generateProceduralPoints = (type, numWaves, depth, roundness) => {
         let newPoints = [];
         const totalVertices = 200; 
@@ -36,11 +40,9 @@ window.initCodeLab = () => {
                 r += Math.sign(wave) * Math.pow(Math.abs(wave), p) * (depth / 2);
             } 
             else if (type === 'flower') {
-                // Shape lạ: Cánh hoa
                 r += Math.abs(Math.sin(angle * numWaves / 2)) * depth;
             }
             else if (type === 'burst') {
-                // Shape lạ: Starburst
                 r += (i % 2 === 0 ? depth : -depth);
             }
             else if (type === 'rounded') {
@@ -53,6 +55,44 @@ window.initCodeLab = () => {
             newPoints.push({ x, y });
         }
         return newPoints;
+    };
+
+    // Hàm tính toán đường cong tại một đỉnh
+    const computeCorner = (p1, p2, p3, radius, type) => {
+        if (radius <= 0 || type === 0) return [p2];
+
+        const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
+        const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
+        const d1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
+        const d2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
+        
+        // Giới hạn bán kính không vượt quá nửa cạnh ngắn nhất
+        const r = Math.min(radius / 2, d1 / 2, d2 / 2);
+
+        const start = { x: p2.x + v1.x / d1 * r, y: p2.y + v1.y / d1 * r };
+        const end = { x: p2.x + v2.x / d2 * r, y: p2.y + v2.y / d2 * r };
+
+        let arcPoints = [];
+        const steps = 10;
+        for (let i = 0; i <= steps; i++) {
+            const t = i / steps;
+            let cx, cy;
+            
+            if (type === 1) { // Bo ngoài (Convex) - Quadratic Bezier
+                cx = (1 - t) * (1 - t) * start.x + 2 * (1 - t) * t * p2.x + t * t * end.x;
+                cy = (1 - t) * (1 - t) * start.y + 2 * (1 - t) * t * p2.y + t * t * end.y;
+            } else { // Bo trong (Concave/Inverted)
+                // Lấy trung điểm của dây cung để làm tâm đảo ngược
+                const midX = (start.x + end.x) / 2;
+                const midY = (start.y + end.y) / 2;
+                const invX = p2.x + (midX - p2.x) * 2;
+                const invY = p2.y + (midY - p2.y) * 2;
+                cx = (1 - t) * (1 - t) * start.x + 2 * (1 - t) * t * invX + t * t * end.x;
+                cy = (1 - t) * (1 - t) * start.y + 2 * (1 - t) * t * invY + t * t * end.y;
+            }
+            arcPoints.push({ x: cx, y: cy });
+        }
+        return arcPoints;
     };
 
     // --- GRADIENT SYSTEM ---
@@ -79,18 +119,25 @@ window.initCodeLab = () => {
     window.updateColorStop = (idx, val) => { gradientStops[idx] = val; updateAll(); };
     window.removeColorStop = (idx) => { gradientStops.splice(idx, 1); renderColorStops(); };
 
+    let editingIdx = null;
+
     // --- MAIN UPDATE ---
     function updateAll() {
         const getVal = (id) => document.getElementById(id)?.value;
         const getInt = (id) => parseInt(document.getElementById(id)?.value || 0);
-
-        const w = getVal('cl-width') || 320, h = getVal('cl-height') || 320;
+    
+        // 1. Lấy thông số từ UI
+        const w = getVal('cl-width') || 320;
+        const h = getVal('cl-height') || 320;
         const canvasBg = getVal('cl-bg-picker') || '#ffffff';
-        const blur = getVal('glass-blur') || 10, gOp = getVal('glass-opacity') || 0.2;
-        const shadX = getVal('shadow-x') || 0, shadY = getVal('shadow-y') || 20;
-        const shadBlur = getVal('shadow-blur') || 30, shadOp = getVal('shadow-opacity') || 0.4;
+        const blur = getVal('glass-blur') || 10;
+        const gOp = getVal('glass-opacity') || 0.2;
+        const shadX = getVal('shadow-x') || 0;
+        const shadY = getVal('shadow-y') || 20;
+        const shadBlur = getVal('shadow-blur') || 30;
+        const shadOp = getVal('shadow-opacity') || 0.4;
         const angle = getVal('grad-angle') || 45;
-
+    
         // Engine Params
         const engineMode = getVal('cl-engine-mode') || 'manual';
         const numPoints = getInt('cl-shape-points');
@@ -98,27 +145,43 @@ window.initCodeLab = () => {
         const roundness = getInt('cl-shape-round');
         const rotate = getInt('cl-shape-rotate');
         const isInverted = document.getElementById('cl-invert-shape')?.checked;
-
-        // BƯỚC 1: LẤY ĐIỂM GỐC (Base Points)
-        let pts = (engineMode === 'manual') ? [...points] : generateProceduralPoints(engineMode, numPoints, depth, roundness);
-
-        // BƯỚC 2: XOAY TỌA ĐỘ
+    
+        // BƯỚC 1: TÍNH TOÁN TẬP ĐIỂM CHI TIẾT (Xử lý bo góc nếu là manual)
+        let basePts = [];
+        if (engineMode === 'manual') {
+            for (let i = 0; i < points.length; i++) {
+                const prev = points[(i - 1 + points.length) % points.length];
+                const curr = points[i];
+                const next = points[(i + 1) % points.length];
+                
+                // Lấy các điểm tạo thành góc bo
+                const cornerPoints = computeCorner(prev, curr, next, curr.r || 0, curr.t || 0);
+                basePts.push(...cornerPoints);
+            }
+        } else {
+            // Chế độ tự động (Wavy, Flower...)
+            basePts = generateProceduralPoints(engineMode, numPoints, depth, roundness);
+        }
+    
+        // BƯỚC 2: XOAY TỌA ĐỘ TRÊN TẬP ĐIỂM ĐÃ TÍNH TOÁN
         const rad = (rotate * Math.PI) / 180;
-        const rotatedPoints = pts.map(p => ({
+        const finalPoints = basePts.map(p => ({
             x: ((p.x - 50) * Math.cos(rad) - (p.y - 50) * Math.sin(rad) + 50).toFixed(2),
             y: ((p.x - 50) * Math.sin(rad) + (p.y - 50) * Math.cos(rad) + 50).toFixed(2)
         }));
-
-        // BƯỚC 3: TÍNH TOÁN CHUỖI POLYGON (Có Invert)
+    
+        // BƯỚC 3: TẠO CHUỖI POLYGON (Xử lý cả trường hợp Invert)
         let finalClipPath = "";
+        const pathString = finalPoints.map(p => `${p.x}% ${p.y}%`).join(', ');
+    
         if (isInverted) {
-            const innerPath = rotatedPoints.map(p => `${p.x}% ${p.y}%`).join(', ');
-            finalClipPath = `polygon(0% 0%, 0% 100%, 100% 100%, 100% 0%, 0% 0%, ${innerPath}, ${rotatedPoints[0].x}% ${rotatedPoints[0].y}%)`;
+            // Vẽ khung bao ngoài rồi vẽ ngược vào trong để tạo lỗ hổng
+            finalClipPath = `polygon(0% 0%, 0% 100%, 100% 100%, 100% 0%, 0% 0%, ${pathString}, ${finalPoints[0].x}% ${finalPoints[0].y}%)`;
         } else {
-            finalClipPath = `polygon(${rotatedPoints.map(p => `${p.x}% ${p.y}%`).join(', ')})`;
+            finalClipPath = `polygon(${pathString})`;
         }
-
-        // BƯỚC 4: UI CONTROLS VISIBILITY
+    
+        // BƯỚC 4: CẬP NHẬT GIAO DIỆN ĐIỀU KHIỂN (Visibility)
         if (engineMode === 'manual') {
             handleLayer.style.display = 'block';
             document.getElementById('cl-manual-controls').style.display = 'block';
@@ -127,21 +190,28 @@ window.initCodeLab = () => {
             handleLayer.style.display = 'none';
             document.getElementById('cl-manual-controls').style.display = 'none';
             document.getElementById('cl-procedural-controls').style.display = 'block';
-            if(document.getElementById('val-shape-points')) document.getElementById('val-shape-points').innerText = numPoints;
-            if(document.getElementById('val-shape-depth')) document.getElementById('val-shape-depth').innerText = depth;
-            if(document.getElementById('val-shape-round')) document.getElementById('val-shape-round').innerText = roundness;
+            
+            // Cập nhật nhãn số liệu cho Procedural
+            const updateLabel = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
+            updateLabel('val-shape-points', numPoints);
+            updateLabel('val-shape-depth', depth);
+            updateLabel('val-shape-round', roundness);
         }
-
-        // BƯỚC 5: APPLY STYLES
+    
+        // BƯỚC 5: APPLY STYLE VÀO PHẦN TỬ HIỂN THỊ
         const canvas = document.querySelector('.cl-canvas');
         if (canvas) canvas.style.backgroundColor = canvasBg;
+    
         const decor = document.querySelector('.cl-canvas-decor');
         if (decor) decor.style.display = document.getElementById('cl-show-decor')?.checked ? 'block' : 'none';
-
+    
         wrapper.style.width = `${w}px`;
         wrapper.style.height = `${h}px`;
+        
+        // Áp dụng Drop Shadow lên Container
         shadowContainer.style.filter = `drop-shadow(${shadX}px ${shadY}px ${shadBlur}px rgba(0, 0, 0, ${shadOp}))`;
-
+    
+        // Áp dụng Glassmorphism lên Target
         const rgbaStops = gradientStops.map(color => hexToRgba(color, gOp)).join(', ');
         target.style.background = `linear-gradient(${angle}deg, ${rgbaStops})`;
         target.style.backdropFilter = `blur(${blur}px)`;
@@ -149,14 +219,14 @@ window.initCodeLab = () => {
         target.style.clipPath = finalClipPath;
         target.style.webkitClipPath = finalClipPath;
         target.style.border = `1px solid rgba(255, 255, 255, ${gOp})`;
-
-        // Labels
+    
+        // Cập nhật nhãn thông số chung
         document.getElementById('val-shape-rotate').innerText = rotate;
-        const setLabel = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
-        setLabel('val-blur', blur);
-        setLabel('val-opacity', gOp);
-        setLabel('val-grad-angle', angle);
-
+        document.getElementById('val-blur').innerText = blur;
+        document.getElementById('val-opacity').innerText = gOp;
+        document.getElementById('val-grad-angle').innerText = angle;
+    
+        // Xuất mã code ra panel
         renderCodeOutput(w, h, angle, blur, gOp, shadX, shadY, shadBlur, shadOp, finalClipPath, engineMode, numPoints, depth);
     }
 
@@ -182,25 +252,94 @@ window.initCodeLab = () => {
     }
 
     // --- HANDLE SYSTEM ---
+    let menuTimer = null; 
+
     window.renderHandles = () => {
         handleLayer.innerHTML = '';
+        const menu = document.getElementById('cl-node-menu');
+
         points.forEach((pt, idx) => {
             const dot = document.createElement('div');
-            dot.className = 'cl-dot';
-            dot.style.left = `${pt.x}%`; dot.style.top = `${pt.y}%`;
-            dot.oncontextmenu = (e) => { e.preventDefault(); if (points.length > 3) { points.splice(idx, 1); renderHandles(); } };
-            dot.onmousedown = (e) => { e.preventDefault(); draggingIdx = idx; window.addEventListener('mousemove', handleMouseMove); window.addEventListener('mouseup', handleMouseUp); };
+            dot.className = `cl-dot ${editingIdx === idx ? 'active' : ''}`;
+            dot.style.left = `${pt.x}%`;
+            dot.style.top = `${pt.y}%`;
+
+            dot.onmouseenter = () => {
+                clearTimeout(menuTimer); 
+                const rect = dot.getBoundingClientRect();
+                menu.style.display = 'flex';
+                menu.style.left = `${rect.left + window.scrollX - 40}px`; 
+                menu.style.top = `${rect.top + window.scrollY - 50}px`;
+                editingIdx = idx;
+            };
+
+            dot.onmouseleave = () => {
+                menuTimer = setTimeout(() => {
+                    menu.style.display = 'none';
+                }, 300);
+            };
+
+            dot.onmousedown = (e) => {
+                e.preventDefault();
+                draggingIdx = idx;
+                openCornerEdit(idx);
+                window.addEventListener('mousemove', handleMouseMove);
+                window.addEventListener('mouseup', handleMouseUp);
+            };
+
             handleLayer.appendChild(dot);
         });
+
+        menu.onmouseenter = () => {
+            clearTimeout(menuTimer);
+        };
+
+        menu.onmouseleave = () => {
+            menu.style.display = 'none'; 
+        };
+
         updateAll();
+    };
+    
+    // Các hàm điều khiển Node
+    window.setNodeType = (type) => {
+        if (editingIdx !== null) {
+            points[editingIdx].t = type;
+            if (type > 0 && !points[editingIdx].r) points[editingIdx].r = 20; // Default radius
+            updateAll();
+            openCornerEdit(editingIdx);
+        }
+    };
+    
+    window.openCornerEdit = (idx) => {
+        const card = document.getElementById('cl-corner-card');
+        const node = points[idx];
+        if (node.t > 0) {
+            card.style.display = 'block';
+            document.getElementById('cl-active-node-idx').innerText = idx;
+            document.getElementById('cl-node-r').value = node.r;
+            document.getElementById('val-node-r').innerText = node.r;
+        } else {
+            card.style.display = 'none';
+        }
+    };
+    
+    // Lắng nghe sự kiện slider bán kính riêng của từng node
+    document.getElementById('cl-node-r').oninput = function() {
+        if (editingIdx !== null) {
+            points[editingIdx].r = this.value;
+            document.getElementById('val-node-r').innerText = this.value;
+            updateAll();
+        }
     };
 
     function handleMouseMove(e) {
         if (draggingIdx === null) return;
         const rect = wrapper.getBoundingClientRect();
-        let x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-        let y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
-        points[draggingIdx] = { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
+        
+        points[draggingIdx].x = Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)));
+        points[draggingIdx].y = Math.max(0, Math.min(100, Math.round(((e.clientY - rect.top) / rect.height) * 100)));
+        
         renderHandles();
     }
 
@@ -208,7 +347,12 @@ window.initCodeLab = () => {
 
     handleLayer.ondblclick = (e) => {
         const rect = wrapper.getBoundingClientRect();
-        points.push({ x: Math.round(((e.clientX - rect.left) / rect.width) * 100), y: Math.round(((e.clientY - rect.top) / rect.height) * 100) });
+        points.push({ 
+            x: Math.round(((e.clientX - rect.left) / rect.width) * 100), 
+            y: Math.round(((e.clientY - rect.top) / rect.height) * 100),
+            r: 0,
+            t: 0
+        });
         renderHandles();
     };
 
@@ -217,6 +361,20 @@ window.initCodeLab = () => {
         const matches = this.value.match(/(\d+\.?\d*)%/g);
         if (matches) { points = []; for (let i = 0; i < matches.length; i += 2) points.push({ x: parseFloat(matches[i]), y: parseFloat(matches[i+1]) }); }
         renderHandles();
+    };
+
+    window.deleteCurrentNode = () => {
+        if (editingIdx !== null && points.length > 3) {
+            points.splice(editingIdx, 1);
+            document.getElementById('cl-node-menu').style.display = 'none';
+            document.getElementById('cl-corner-card').style.display = 'none';
+            editingIdx = null;
+            renderHandles(); 
+        }
+    };
+    
+    window.closeCornerEdit = () => {
+        document.getElementById('cl-corner-card').style.display = 'none';
     };
 
     window.switchCode = (mode) => {
@@ -234,17 +392,16 @@ window.initCodeLab = () => {
     window.resetShape = () => {
         const engineMode = document.getElementById('cl-engine-mode')?.value || 'manual';
         
-        // 1. Reset các thông số chung (Xoay và Nghịch đảo)
         document.getElementById('cl-shape-rotate').value = 0;
         document.getElementById('cl-invert-shape').checked = false;
     
-        // 2. Reset theo từng chế độ cụ thể
         if (engineMode === 'manual') {
-            // Reset về hình vuông 4 điểm
-            points = [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }, { x: 0, y: 100 }];
-            renderHandles(); // Hàm này sẽ tự gọi updateAll()
+            points = [
+                { x: 0, y: 0, r: 0, t: 0 }, { x: 100, y: 0, r: 0, t: 0 }, 
+                { x: 100, y: 100, r: 0, t: 0 }, { x: 0, y: 100, r: 0, t: 0 }
+            ];
+            renderHandles(); 
         } else {
-            // Cấu hình mặc định cho từng Shape Procedural
             const defaults = {
                 wavy: { points: 8, depth: 10, round: 50 },
                 rounded: { points: 6, depth: 15, round: 50 },
@@ -254,12 +411,11 @@ window.initCodeLab = () => {
     
             const config = defaults[engineMode] || { points: 8, depth: 10, round: 50 };
     
-            // Nạp lại giá trị cho các Slider
             document.getElementById('cl-shape-points').value = config.points;
             document.getElementById('cl-shape-depth').value = config.depth;
             document.getElementById('cl-shape-round').value = config.round;
             
-            updateAll(); // Cập nhật giao diện
+            updateAll();
         }
     };
 

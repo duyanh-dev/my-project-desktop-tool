@@ -113,6 +113,24 @@
                         </label>
                     </div>
                 </div>
+
+                <div id="cl-node-menu" class="cl-node-menu" style="display:none; position:fixed; z-index:9999;">
+                    <button onclick="setNodeType(0)">Nhọn</button>
+                    <button onclick="setNodeType(1)">Bo Ngoài</button>
+                    <button onclick="setNodeType(2)">Bo Trong</button>
+                    <button onclick="deleteCurrentNode()" style="color:red;">Xóa</button>
+                </div>
+                
+                <div id="cl-corner-card" class="cl-card" style="display: none; border-left: 3px solid #535bf2;">
+                    <header class="cl-card-header"><i class="fa-solid fa-Sliders"></i> Corner Settings (Point #<span id="cl-active-node-idx">0</span>)</header>
+                    <div class="cl-control">
+                        <div class="cl-label"><span>Radius</span> <span id="val-node-r">20</span>px</div>
+                        <input type="range" id="cl-node-r" min="0" max="100" value="20">
+                    </div>
+                    <div class="cl-input-row">
+                        <button class="cl-btn-small" onclick="closeCornerEdit()">Done</button>
+                    </div>
+                </div>
             
                 <div id="cl-manual-controls">
                     <select id="clip-shape" class="cl-select">
