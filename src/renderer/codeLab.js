@@ -29,6 +29,68 @@ window.initCodeLab = () => {
         return `rgba(${+r}, ${+g}, ${+b}, ${opacity})`;
     };
 
+    // --- RESIZE SYSTEM ---
+let draggingResize = null;
+let startSize = { w: 0, h: 0 };
+let startMouse = { x: 0, y: 0 };
+
+const initResizers = () => {
+    const resizers = document.querySelectorAll('.cl-resizer');
+    const widthInput = document.getElementById('cl-width');
+    const heightInput = document.getElementById('cl-height');
+
+    resizers.forEach(resizer => {
+        resizer.onmousedown = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            draggingResize = resizer.dataset.type;
+            startSize = {
+                w: parseInt(widthInput.value),
+                h: parseInt(heightInput.value)
+            };
+            startMouse = { x: e.clientX, y: e.clientY };
+
+            document.body.style.cursor = resizer.style.cursor;
+            window.addEventListener('mousemove', handleResizeMove);
+            window.addEventListener('mouseup', handleResizeUp);
+        };
+    });
+};
+
+function handleResizeMove(e) {
+    if (!draggingResize) return;
+
+    const widthInput = document.getElementById('cl-width');
+    const heightInput = document.getElementById('cl-height');
+    
+    const deltaX = e.clientX - startMouse.x;
+    const deltaY = e.clientY - startMouse.y;
+
+    if (draggingResize === 'width' || draggingResize === 'both') {
+        const newW = Math.max(50, Math.min(800, startSize.w + deltaX));
+        widthInput.value = newW;
+    }
+    
+    if (draggingResize === 'height' || draggingResize === 'both') {
+        const newH = Math.max(50, Math.min(800, startSize.h + deltaY));
+        heightInput.value = newH;
+    }
+
+    // Cập nhật giao diện ngay lập tức
+    updateAll();
+}
+
+function handleResizeUp() {
+    draggingResize = null;
+    document.body.style.cursor = 'default';
+    window.removeEventListener('mousemove', handleResizeMove);
+    window.removeEventListener('mouseup', handleResizeUp);
+}
+
+// Đừng quên gọi initResizers() ở cuối hàm initCodeLab
+initResizers();
+
     const generateProceduralPoints = (type, numWaves, depth, roundness) => {
         let newPoints = [];
         const totalVertices = 200; 
@@ -138,14 +200,37 @@ window.initCodeLab = () => {
         const mouseX = ((e.clientX - rect.left) / rect.width) * 100;
         const mouseY = ((e.clientY - rect.top) / rect.height) * 100;
         
-        const currentDist = Math.sqrt(Math.pow(mouseX - pt.x, 2) + Math.pow(mouseY - pt.y, 2));
+        // 1. Tính khoảng cách tuyệt đối (Giữ nguyên logic cũ của bạn)
+        let currentDist = Math.sqrt(Math.pow(mouseX - pt.x, 2) + Math.pow(mouseY - pt.y, 2));
+    
+        // 2. KIỂM TRA HƯỚNG (Để tránh lỗi gương phản chiếu)
+        const prev = points[(draggingRadiusIdx - 1 + points.length) % points.length];
+        const next = points[(draggingRadiusIdx + 1) % points.length];
         
+        // Vector phân giác (Bisector)
+        const v1 = { x: prev.x - pt.x, y: prev.y - pt.y };
+        const v2 = { x: next.x - pt.x, y: next.y - pt.y };
+        const d1 = Math.sqrt(v1.x * v1.x + v1.y * v1.y) || 1;
+        const d2 = Math.sqrt(v2.x * v2.x + v2.y * v2.y) || 1;
+        const bUnit = { x: (v1.x / d1 + v2.x / d2), y: (v1.y / d1 + v2.y / d2) };
+        
+        // Vector từ Dot đến chuột
+        const mouseVec = { x: mouseX - pt.x, y: mouseY - pt.y };
+        
+        // Nếu tích vô hướng âm => Chuột đã vượt qua Dot ra phía ngoài
+        // Ta đảo dấu currentDist để delta càng âm hơn => r về 0 và đứng yên ở đó
+        const dotProduct = (mouseVec.x * bUnit.x + mouseVec.y * bUnit.y);
+        if (dotProduct < 0) {
+            currentDist = -currentDist;
+        }
+    
+        // 3. Tính Delta và Radius (Giữ nguyên logic mượt mà của bạn)
         const delta = currentDist - startMouseDist;
-        
         const sensitivity = (pt.t === 1) ? 3.8 : 2.0;
         
         let newR = startRadius + (delta * sensitivity);
     
+        // Chặn giá trị
         newR = Math.min(100, Math.max(0, newR));
     
         if (Math.abs(pt.r - newR) > 0.01) {
@@ -160,9 +245,6 @@ window.initCodeLab = () => {
             if (activeGroup) {
                 const arc = activeGroup.querySelector('.cl-corner-arc');
                 const hit = activeGroup.querySelector('.cl-corner-hit-area');
-                const prev = points[(draggingRadiusIdx - 1 + points.length) % points.length];
-                const next = points[(draggingRadiusIdx + 1) % points.length];
-                
                 const d = getArcPath(prev, pt, next, newR, pt.t);
                 arc.setAttribute('d', d);
                 hit.setAttribute('d', d);
@@ -472,15 +554,48 @@ window.initCodeLab = () => {
 
     function handleMouseUp() { draggingIdx = null; window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); }
 
+    // 1. Tính khoảng cách từ điểm click (p) đến một đoạn thẳng (v-w)
+    const distToSegment = (p, v, w) => {
+        const l2 = Math.pow(v.x - w.x, 2) + Math.pow(v.y - w.y, 2);
+        if (l2 == 0) return Math.pow(p.x - v.x, 2) + Math.pow(p.y - v.y, 2);
+        let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+        t = Math.max(0, Math.min(1, t));
+        return Math.pow(p.x - (v.x + t * (w.x - v.x)), 2) + Math.pow(p.y - (v.y + t * (w.y - v.y)), 2);
+    };
+
+    // 2. Tìm vị trí chính xác để chèn điểm vào giữa 2 điểm cũ
+    const getInsertIndex = (newPt, pts) => {
+        let minSqDist = Infinity;
+        let indexToInsert = pts.length;
+
+        for (let i = 0; i < pts.length; i++) {
+            const p1 = pts[i];
+            const p2 = pts[(i + 1) % pts.length]; // Điểm kế tiếp (vòng lặp cuối nối về đầu)
+            const dist = distToSegment(newPt, p1, p2);
+
+            if (dist < minSqDist) {
+                minSqDist = dist;
+                indexToInsert = i + 1;
+            }
+        }
+        return indexToInsert;
+    };
+
     handleLayer.ondblclick = (e) => {
         const rect = wrapper.getBoundingClientRect();
-        points.push({ 
+        const newPoint = { 
             x: Math.round(((e.clientX - rect.left) / rect.width) * 100), 
             y: Math.round(((e.clientY - rect.top) / rect.height) * 100),
-            r: 0,
-            t: 0
-        });
-        renderHandles();
+            r: 0, // Mặc định góc nhọn
+            t: 0  // Loại nhọn
+        };
+    
+        // TÌM VỊ TRÍ CHÈN THÔNG MINH
+        // Thay vì push vào cuối, ta dùng splice để chèn vào giữa cạnh gần nhất
+        const insertIdx = getInsertIndex(newPoint, points);
+        points.splice(insertIdx, 0, newPoint);
+    
+        renderHandles(); // Vẽ lại mọi thứ
     };
 
     // --- EVENTS ---

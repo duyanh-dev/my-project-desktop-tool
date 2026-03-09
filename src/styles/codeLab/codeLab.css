@@ -40,6 +40,47 @@
     border: 1px dashed #2d333b;
     transition: width 0.1s, height 0.1s;
     z-index: 10;
+    padding: 2px;
+    box-sizing: content-box;
+}
+
+.cl-resizer {
+    position: absolute;
+    z-index: 100;
+    transition: background 0.2s;
+}
+
+/* Thanh bên phải - Chỉnh Width */
+.cl-resizer-r {
+    top: 0; right: -15px;
+    width: 6px; height: 100%;
+    cursor: e-resize;
+}
+
+/* Thanh dưới - Chỉnh Height */
+.cl-resizer-b {
+    bottom: -15px; left: 0;
+    width: 100%; height: 6px;
+    cursor: s-resize;
+}
+
+/* Nút góc - Chỉnh cả hai */
+.cl-resizer-br {
+    bottom: -25px; right: -25px;
+    width: 14px; height: 14px;
+    background: #535bf2;
+    border: 3px solid #1c2128;
+    border-radius: 4px;
+    cursor: nwse-resize;
+}
+
+.cl-resizer:hover {
+    background: rgba(83, 91, 242, 0.5);
+}
+
+.cl-resizer-br:hover {
+    transform: scale(1.2);
+    background: #00ff88;
 }
 
 .cl-shadow-container {
@@ -71,7 +112,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none;
+    /* pointer-events: none; */
     z-index: 20
 }
 
