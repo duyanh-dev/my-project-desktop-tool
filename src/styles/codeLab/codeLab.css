@@ -614,3 +614,14 @@ input[type=number]:focus {
     stroke-width: 2;
     stroke: #00ff88;
 }
+
+.cl-snap-guide-v {
+    position: absolute; top: 0; bottom: 0; width: 1px;
+    background: #a855f7; border-left: 1px dashed #a855f7;
+    z-index: 25; display: none; pointer-events: none;
+}
+.cl-snap-guide-h {
+    position: absolute; left: 0; right: 0; height: 1px;
+    background: #a855f7; border-top: 1px dashed #a855f7;
+    z-index: 25; display: none; pointer-events: none;
+}

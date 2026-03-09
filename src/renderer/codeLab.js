@@ -9,6 +9,36 @@ window.initCodeLab = () => {
     let startMouseDist = 0;
     let startRadius = 0;
 
+    let undoStack = [];
+    let redoStack = [];
+    const MAX_HISTORY = 50; 
+
+    const saveState = () => {
+        undoStack.push(JSON.parse(JSON.stringify(points)));
+        if (undoStack.length > MAX_HISTORY) undoStack.shift();
+        redoStack = []; 
+    };
+
+    window.undo = () => {
+        if (undoStack.length === 0) return;
+        redoStack.push(JSON.parse(JSON.stringify(points)));
+        points = undoStack.pop();
+        renderHandles();
+    };
+    
+    window.redo = () => {
+        if (redoStack.length === 0) return;
+        undoStack.push(JSON.parse(JSON.stringify(points)));
+        points = redoStack.pop();
+        renderHandles();
+    };
+    
+    // Lắng nghe phím tắt Ctrl+Z và Ctrl+Y
+    window.addEventListener('keydown', (e) => {
+        if (e.cmdKey && e.key === 'z') { e.preventDefault(); window.undo(); }
+        if (e.ctrlKey && e.key === 'y') { e.preventDefault(); window.redo(); }
+    });
+
     if (!container || !target || !wrapper || !shadowContainer) return;
 
     let currentMode = 'css';
@@ -483,6 +513,7 @@ initResizers();
             };
 
             dot.onmousedown = (e) => {
+                saveState()
                 e.preventDefault();
                 draggingIdx = idx;
                 openCornerEdit(idx);
@@ -546,10 +577,38 @@ initResizers();
         if (draggingIdx === null) return;
         const rect = wrapper.getBoundingClientRect();
         
-        points[draggingIdx].x = Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)));
-        points[draggingIdx].y = Math.max(0, Math.min(100, Math.round(((e.clientY - rect.top) / rect.height) * 100)));
+        let rawX = ((e.clientX - rect.left) / rect.width) * 100;
+        let rawY = ((e.clientY - rect.top) / rect.height) * 100;
+    
+        const snapped = getSnappedPos(rawX, rawY, draggingIdx);
+        
+        // Hiển thị Guide Line nếu có Snapping xảy ra
+        const guideX = document.getElementById('cl-guide-x');
+        const guideY = document.getElementById('cl-guide-y');
+    
+        if (snapped.x !== rawX) {
+            guideX.style.display = 'block';
+            guideX.style.left = snapped.x + '%';
+        } else { guideX.style.display = 'none'; }
+    
+        if (snapped.y !== rawY) {
+            guideY.style.display = 'block';
+            guideY.style.top = snapped.y + '%';
+        } else { guideY.style.display = 'none'; }
+    
+        points[draggingIdx].x = Math.max(0, Math.min(100, snapped.x));
+        points[draggingIdx].y = Math.max(0, Math.min(100, snapped.y));
         
         renderHandles();
+    }
+    
+    // Đừng quên ẩn Guide khi nhả chuột
+    function handleMouseUp() {
+        draggingIdx = null;
+        document.getElementById('cl-guide-x').style.display = 'none';
+        document.getElementById('cl-guide-y').style.display = 'none';
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
     }
 
     function handleMouseUp() { draggingIdx = null; window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); }
@@ -593,6 +652,7 @@ initResizers();
         // TÌM VỊ TRÍ CHÈN THÔNG MINH
         // Thay vì push vào cuối, ta dùng splice để chèn vào giữa cạnh gần nhất
         const insertIdx = getInsertIndex(newPoint, points);
+        saveState()
         points.splice(insertIdx, 0, newPoint);
     
         renderHandles(); // Vẽ lại mọi thứ
@@ -607,6 +667,7 @@ initResizers();
 
     window.deleteCurrentNode = () => {
         if (editingIdx !== null && points.length > 3) {
+            saveState()
             points.splice(editingIdx, 1);
             document.getElementById('cl-node-menu').style.display = 'none';
             document.getElementById('cl-corner-card').style.display = 'none';
@@ -659,6 +720,174 @@ initResizers();
             
             updateAll();
         }
+    };
+
+    const handleToggle = document.getElementById('cl-show-handles');
+
+    if (handleToggle) {
+        handleToggle.addEventListener('change', () => {
+            const isVisible = handleToggle.checked;
+            
+            // 1. Ẩn/Hiện lớp chứa Dot
+            if (handleLayer) {
+                handleLayer.style.opacity = isVisible ? '1' : '0';
+                // Khi ẩn thì không cho click để tránh user vô tình làm hỏng hình
+                handleLayer.style.pointerEvents = isVisible ? 'auto' : 'none';
+            }
+
+            // 2. Ẩn/Hiện các đường SVG bo góc (nếu có)
+            const svgLayer = document.getElementById('cl-svg-handles');
+            if (svgLayer) {
+                svgLayer.style.opacity = isVisible ? '1' : '0';
+            }
+
+            // 3. Ẩn/Hiện thanh resizer của khung
+            document.querySelectorAll('.cl-resizer').forEach(r => {
+                r.style.opacity = isVisible ? '1' : '0';
+                r.style.pointerEvents = isVisible ? 'auto' : 'none';
+            });
+        });
+    }
+
+    window.importSVGAdvanced = () => {
+        const svgCode = document.getElementById('cl-svg-input').value;
+        const epsilon = parseFloat(document.getElementById('cl-svg-precision').value);
+        
+        if (!svgCode.includes('<svg')) {
+            alert("Dán mã SVG vào đã nhé bé"); return;
+        }
+
+        if (!svgCode.includes('<svg')) {
+            if (!isAuto) alert("Dán mã SVG vào đã nhé Duy Anh!"); 
+            return;
+        }
+
+        saveState();
+    
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgCode, "image/svg+xml");
+        const container = document.createElement('div');
+        container.style.cssText = 'position:absolute; visibility:hidden; width:1000px; height:1000px;';
+        container.innerHTML = svgCode;
+        document.body.appendChild(container);
+        
+        const svgEl = container.querySelector('svg');
+        const fullBBox = svgEl.getBBox();
+        const shapes = svgEl.querySelectorAll('path, rect, circle, ellipse, polygon, polyline');
+    
+        let shapeGroups = [];
+        shapes.forEach(shape => {
+            try {
+                const len = shape.getTotalLength();
+                if (len === 0) return;
+                let currentShapePoints = [];
+                const sampleCount = epsilon < 0.2 ? 300 : 150; 
+                for (let i = 0; i <= sampleCount; i++) {
+                    const p = shape.getPointAtLength((i / sampleCount) * len);
+                    currentShapePoints.push({ x: p.x, y: p.y });
+                }
+                shapeGroups.push(simplifyPoints(currentShapePoints, epsilon));
+            } catch (e) { console.warn(e); }
+        });
+    
+        // --- THUẬT TOÁN NỐI CẦU SIÊU CẤP (GHOST BRIDGE) ---
+        let finalCombinedPoints = [];
+        if (shapeGroups.length > 0) {
+            // Lấy điểm khởi đầu của hình đầu tiên làm "Trạm trung chuyển"
+            const globalStart = shapeGroups[0][0];
+    
+            shapeGroups.forEach((group, idx) => {
+                if (idx === 0) {
+                    // Hình đầu tiên: Vẽ bình thường và chốt vòng
+                    finalCombinedPoints.push(...group);
+                    finalCombinedPoints.push(group[0]);
+                } else {
+                    // Từ hình thứ 2 trở đi:
+                    // 1. Tạo cầu nối từ trạm trung chuyển đến điểm đầu hình mới
+                    finalCombinedPoints.push(globalStart); 
+                    finalCombinedPoints.push(group[0]);
+                    // 2. Vẽ hình mới
+                    finalCombinedPoints.push(...group);
+                    // 3. Chốt vòng hình mới và quay lại trạm trung chuyển
+                    finalCombinedPoints.push(group[0]);
+                    finalCombinedPoints.push(globalStart);
+                }
+            });
+        }
+    
+        // Căn giữa và Scale
+        const margin = 5;
+        const scale = Math.min((100 - margin * 2) / fullBBox.width, (100 - margin * 2) / fullBBox.height);
+        const offsetX = (100 - fullBBox.width * scale) / 2;
+        const offsetY = (100 - fullBBox.height * scale) / 2;
+    
+        points = finalCombinedPoints.map(p => ({
+            x: parseFloat(((p.x - fullBBox.x) * scale + offsetX).toFixed(2)),
+            y: parseFloat(((p.y - fullBBox.y) * scale + offsetY).toFixed(2)),
+            r: 0, t: 0
+        }));
+    
+        // --- GIỮ NGUYÊN HÀM BỔ TRỢ CỦA DUY ANH ---
+        function distToSegment(p, v, w) {
+            const l2 = Math.pow(v.x - w.x, 2) + Math.pow(v.y - w.y, 2);
+            if (l2 == 0) return Math.pow(p.x - v.x, 2) + Math.pow(p.y - v.y, 2);
+            let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+            t = Math.max(0, Math.min(1, t));
+            return Math.pow(p.x - (v.x + t * (w.x - v.x)), 2) + Math.pow(p.y - (v.y + t * (w.y - v.y)), 2);
+        }
+        function simplifyPoints(pts, eps) {
+            if (pts.length <= 2) return pts;
+            let dmax = 0, index = 0;
+            for (let i = 1; i < pts.length - 1; i++) {
+                const d = distToSegment(pts[i], pts[0], pts[pts.length - 1]);
+                if (d > dmax) { index = i; dmax = d; }
+            }
+            if (dmax > eps * eps) {
+                const res1 = simplifyPoints(pts.slice(0, index + 1), eps);
+                const res2 = simplifyPoints(pts.slice(index), eps);
+                return res1.slice(0, res1.length - 1).concat(res2);
+            }
+            return [pts[0], pts[pts.length - 1]];
+        }
+    
+        document.body.removeChild(container);
+        renderHandles();
+    };
+
+    const precisionSlider = document.getElementById('cl-svg-precision');
+    const precisionVal = document.getElementById('val-svg-precision');
+
+    if (precisionSlider && precisionVal) {
+        precisionSlider.addEventListener('input', () => {
+            // 1. Cập nhật con số hiển thị
+            precisionVal.innerText = precisionSlider.value;
+            
+            // 2. Tự động chạy lại logic SVG nếu đang có dữ liệu trong textarea
+            const svgCode = document.getElementById('cl-svg-input').value;
+            if (svgCode.trim().includes('<svg')) {
+                importSVGAdvanced(true); // Truyền thêm flag "isAuto" để không hiện alert
+            }
+        });
+}       
+
+    const getSnappedPos = (x, y, excludeIdx = null) => {
+        const threshold = 2.5; // Khoảng cách 2.5% thì bắt đầu hít
+        const snapTargets = [0, 25, 50, 75, 100];
+        
+        // 1. Hít vào các mốc cố định
+        snapTargets.forEach(target => {
+            if (Math.abs(x - target) < threshold) x = target;
+            if (Math.abs(y - target) < threshold) y = target;
+        });
+
+        // 2. Hít vào tọa độ của các Dot khác (Căn thẳng hàng)
+        points.forEach((pt, idx) => {
+            if (idx === excludeIdx) return;
+            if (Math.abs(x - pt.x) < threshold) x = pt.x;
+            if (Math.abs(y - pt.y) < threshold) y = pt.y;
+        });
+
+        return { x, y };
     };
 
     container.querySelectorAll('input, select').forEach(i => {
