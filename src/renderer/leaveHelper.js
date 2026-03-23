@@ -54,14 +54,16 @@ function renderEarlyResult(type, rawIn, rawOut, start, end, mins, wait, title) {
     const mốc45 = formatTime(endMins - 45);
 
     const stayMore = Math.ceil(wait);
+    const minsMinus15 = mins - 15;
+    const missingMins = Math.ceil(mins - 15 + wait);
     const optimizationTip = stayMore > 0 
         ? `<div style="margin-top:12px; padding:12px; background:rgba(99,102,241,0.1); border-radius:8px; border-left:4px solid #6366f1; color: #a5b4fc; font-size: 12px;">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> <b>MẸO TIẾT KIỆM PHÉP:</b><br>
-            Hiện tại bạn đang thiếu <b>${Math.ceil(mins - 15 + wait)} phút</b> nên phải xin đơn <b>${mins} phút</b>. 
-            Nếu bạn ráng ở lại thêm <b>${stayMore} phút</b> (đến <b>${formatTime(timeToMins(rawOut) + stayMore)}</b>), 
-            khoảng hụt sẽ giảm xuống còn <b>${mins - 15} phút</b>.
-           </div>`
-        : '';
+        <i class="fa-solid fa-wand-magic-sparkles"></i> <b>MẸO TIẾT KIỆM PHÉP:</b><br>
+        Hiện tại bạn đang thiếu <b>${missingMins} phút (~${(missingMins / 60).toFixed(2)} giờ)</b> nên phải xin đơn <b>${mins} phút (~${(mins / 60).toFixed(2)} giờ)</b>. 
+        Nếu bạn ráng ở lại thêm <b>${stayMore} phút</b> (đến <b>${formatTime(timeToMins(rawOut) + stayMore)}</b>), 
+        khoảng hụt sẽ giảm xuống còn <b>${minsMinus15} phút (~${(minsMinus15 / 60).toFixed(2)} giờ)</b>.
+    </div>`
+    : '';
 
     return `
         <div class="lh-result-card">
@@ -75,8 +77,8 @@ function renderEarlyResult(type, rawIn, rawOut, start, end, mins, wait, title) {
                 <div class="lh-summary-text">
                     <div style="margin-bottom: 8px; color: #818cf8; border-bottom: 1px solid rgba(129, 140, 248, 0.2); padding-bottom: 5px;">PHÂN TÍCH LOGIC VỀ SỚM:</div>
                     • <b>Nguyên tắc 8h:</b> Với giờ vào <b>${rawIn}</b>, bạn cần làm đến <b>${end}</b> để đủ định mức.<br>
-                    • <b>Thực tế:</b> Bạn rời đi lúc ${rawOut}, thiếu <b>${Math.ceil(mins - 15 + wait)} phút</b>.<br>
-                    • <b>Quy tắc 15p:</b> Để bù hoàn toàn số phút thiếu, đơn của bạn phải là <b>${mins} phút</b>.
+                    • <b>Thực tế:</b> Bạn rời đi lúc ${rawOut}, thiếu <b>${missingMins} phút (~${(missingMins / 60).toFixed(2)} giờ)</b>.<br>
+                    • <b>Quy tắc 15p:</b> Để bù hoàn toàn số phút thiếu, đơn của bạn phải là <b>${mins} phút (~${(mins / 60).toFixed(2)} giờ)</b>.
 
                     <div style="margin: 12px 0; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; font-size: 12px;">
                         <b style="color: #cbd5e1; display: block; margin-bottom: 5px;">BẢNG ĐỐI CHIẾU MỐC GIỜ & PHÉP:</b>

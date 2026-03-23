@@ -576,42 +576,71 @@ initResizers();
     function handleMouseMove(e) {
         if (draggingIdx === null) return;
         const rect = wrapper.getBoundingClientRect();
+        let rX = ((e.clientX - rect.left) / rect.width) * 100;
+        let rY = ((e.clientY - rect.top) / rect.height) * 100;
+    
+        const res = getSnappedPos(rX, rY, draggingIdx);
         
-        let rawX = ((e.clientX - rect.left) / rect.width) * 100;
-        let rawY = ((e.clientY - rect.top) / rect.height) * 100;
+        // Hiển thị Guide Layer
+        const layer = document.getElementById('cl-guide-layer');
+        if (layer) {
+            layer.style.display = (res.guides.v || res.guides.h || res.guides.d1 || res.guides.d2) ? 'block' : 'none';
     
-        const snapped = getSnappedPos(rawX, rawY, draggingIdx);
-        
-        // Hiển thị Guide Line nếu có Snapping xảy ra
-        const guideX = document.getElementById('cl-guide-x');
-        const guideY = document.getElementById('cl-guide-y');
+            // Cập nhật từng đường
+            const setLine = (id, show, x1, y1, x2, y2) => {
+                const line = document.getElementById(id);
+                if (!line) return;
+                line.style.display = show ? 'block' : 'none';
+                if (show) {
+                    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+                    line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+                }
+            };
     
-        if (snapped.x !== rawX) {
-            guideX.style.display = 'block';
-            guideX.style.left = snapped.x + '%';
-        } else { guideX.style.display = 'none'; }
+            setLine('guide-v', res.guides.v, res.x, 0, res.x, 100);
+            setLine('guide-h', res.guides.h, 0, res.y, 100, res.y);
+            
+            // Đường chéo vẽ dài xuyên suốt khung
+            if (res.guides.d1) {
+                const c = res.y - res.x;
+                setLine('guide-d1', true, 0, c, 100, 100 + c);
+            } else setLine('guide-d1', false);
     
-        if (snapped.y !== rawY) {
-            guideY.style.display = 'block';
-            guideY.style.top = snapped.y + '%';
-        } else { guideY.style.display = 'none'; }
+            if (res.guides.d2) {
+                const c = res.y + res.x;
+                setLine('guide-d2', true, 0, c, 100, c - 100);
+            } else setLine('guide-d2', false);
+        }
     
-        points[draggingIdx].x = Math.max(0, Math.min(100, snapped.x));
-        points[draggingIdx].y = Math.max(0, Math.min(100, snapped.y));
+        points[draggingIdx].x = parseFloat(res.x.toFixed(2));
+        points[draggingIdx].y = parseFloat(res.y.toFixed(2));
         
         renderHandles();
     }
     
-    // Đừng quên ẩn Guide khi nhả chuột
     function handleMouseUp() {
         draggingIdx = null;
-        document.getElementById('cl-guide-x').style.display = 'none';
-        document.getElementById('cl-guide-y').style.display = 'none';
+    
+        // Tìm layer guide
+        const layer = document.getElementById('cl-guide-layer');
+        if (layer) {
+            // Ẩn toàn bộ container
+            layer.style.display = 'none';
+            
+            // RESET: Ẩn thủ công từng đường line bên trong để chắc chắn
+            const lines = ['guide-v', 'guide-h', 'guide-d1', 'guide-d2'];
+            lines.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+        }
+    
+        // Gỡ bỏ sự kiện khỏi window
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
     }
-
-    function handleMouseUp() { draggingIdx = null; window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); }
+    
+ 
 
     // 1. Tính khoảng cách từ điểm click (p) đến một đoạn thẳng (v-w)
     const distToSegment = (p, v, w) => {
@@ -870,25 +899,74 @@ initResizers();
         });
 }       
 
-    const getSnappedPos = (x, y, excludeIdx = null) => {
-        const threshold = 2.5; // Khoảng cách 2.5% thì bắt đầu hít
-        const snapTargets = [0, 25, 50, 75, 100];
-        
-        // 1. Hít vào các mốc cố định
-        snapTargets.forEach(target => {
-            if (Math.abs(x - target) < threshold) x = target;
-            if (Math.abs(y - target) < threshold) y = target;
-        });
+const getSnappedPos = (x, y, excludeIdx = null) => {
+    const threshold = 2.0; 
+    let sX = x, sY = y;
+    let guides = { v: false, h: false, d1: false, d2: false };
+    
+    // Lưu khoảng cách gần nhất để không bị nhảy giữa 2 mục tiêu cạnh nhau
+    let minDistX = threshold;
+    let minDistY = threshold;
 
-        // 2. Hít vào tọa độ của các Dot khác (Căn thẳng hàng)
+    // 1. SNAP TRỤC THẲNG (Ưu tiên cao nhất)
+    const targets = [0, 50, 100];
+    points.forEach((pt, idx) => {
+        if (idx !== excludeIdx) {
+            targets.push(pt.x);
+            targets.push(pt.y);
+        }
+    });
+
+    // Tìm điểm X gần nhất
+    targets.forEach(tx => {
+        const d = Math.abs(x - tx);
+        if (d < minDistX) {
+            minDistX = d;
+            sX = tx;
+            guides.v = true;
+        }
+    });
+
+    // Tìm điểm Y gần nhất
+    targets.forEach(ty => {
+        const d = Math.abs(y - ty);
+        if (d < minDistY) {
+            minDistY = d;
+            sY = ty;
+            guides.h = true;
+        }
+    });
+
+    // 2. SNAP ĐƯỜNG CHÉO (Chỉ xét khi không bị hít cứng vào X hoặc Y)
+    if (!guides.v || !guides.h) {
+        let minDistD = threshold;
         points.forEach((pt, idx) => {
             if (idx === excludeIdx) return;
-            if (Math.abs(x - pt.x) < threshold) x = pt.x;
-            if (Math.abs(y - pt.y) < threshold) y = pt.y;
-        });
 
-        return { x, y };
-    };
+            // Chéo thuận (x - y = C)
+            const d1 = Math.abs((x - y) - (pt.x - pt.y)) / Math.sqrt(2);
+            if (d1 < minDistD) {
+                const offset = (x - y) - (pt.x - pt.y);
+                sX = x - offset / 2;
+                sY = y + offset / 2;
+                guides.d1 = true;
+                minDistD = d1;
+            }
+
+            // Chéo nghịch (x + y = C)
+            const d2 = Math.abs((x + y) - (pt.x + pt.y)) / Math.sqrt(2);
+            if (d2 < minDistD) {
+                const offset = (x + y) - (pt.x + pt.y);
+                sX = x - offset / 2;
+                sY = y - offset / 2;
+                guides.d2 = true;
+                minDistD = d2;
+            }
+        });
+    }
+
+    return { x: sX, y: sY, guides };
+};
 
     container.querySelectorAll('input, select').forEach(i => {
         i.addEventListener('input', () => {

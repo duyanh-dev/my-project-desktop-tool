@@ -547,14 +547,17 @@ document.getElementById('btnIn').addEventListener('click', async () => {
         document.getElementById('txtIn').innerText = project.inputDir;
         document.getElementById('active-project-path').innerText = project.inputDir;
         App.save(); UI.renderProjectList();
+
+        if (project.mode === 'custom' && !project.outputDir) {
+            UI.log(project.id, "Đã nhận thư mục gốc. Vui lòng chọn 'TARGET CSS' (Destination) để bắt đầu biên dịch.", 'warn');
+            return; 
+        }
         
         UI.log(project.id, "Bắt đầu quét thư mục...", 'warn');
         
-        // Thực hiện quét và lấy số lượng file
         const foundFiles = UI.initialScan(project.inputDir, project.id);
         
         if (foundFiles === 0) {
-            // Log ra lỗi nếu không tìm thấy file .scss
             UI.log(project.id, "Lỗi: Thư mục này không chứa bất kỳ file .scss nào!", 'error');
             if (App.config.native) new Notification("Dev-QC Pro", { body: "Không tìm thấy file .scss trong thư mục đã chọn." });
         } else {
@@ -581,6 +584,11 @@ document.getElementById('btnOut').addEventListener('click', async () => {
         await Compiler.recompileMainFiles(project.inputDir, project.id);
         
         UI.log(project.id, `Đã xuất toàn bộ CSS sang thư mục mới thành công.`, 'success');
+
+        if (project.inputDir) {
+            Watcher.start(project.id);
+            UI.log(project.id, "Engine đã bắt đầu theo dõi thay đổi.", "success");
+        }
     }
 });
 
