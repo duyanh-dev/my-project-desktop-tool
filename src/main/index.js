@@ -11,7 +11,7 @@ protocol.registerSchemesAsPrivileged([
 const _segA = "Z2hwX2k3WElwOG4xV1oz";
 const _segB = "TlM3Ump3aHlueU1";
 const _segC = "QYW52ZVZIMzFSUWFNag==";
-const REMOTE_SWITCH_URL = "https://gist.githubusercontent.com/Duyanh174/16618cfde1400e2135ce3efb33727a66/raw/license.json";
+const REMOTE_SWITCH_URL = "https://gist.githubusercontent.com/duyanh-dev/16618cfde1400e2135ce3efb33727a66/raw/license.json";
 
 function _getGatekeeperKey() {
     const fullSecret = _segA + _segB + _segC;
