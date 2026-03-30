@@ -5,7 +5,7 @@ const path = require('path');
 const { exec } = require('child_process');
 
 const CURRENT_VERSION = "1.1.0"; // Phiên bản hiện tại của app
-const GIST_URL = "https://gist.githubusercontent.com/Duyanh174/16618cfde1400e2135ce3efb33727a66/raw/license.json";
+const GIST_URL = "https://gist.githubusercontent.com/duyanh-dev/16618cfde1400e2135ce3efb33727a66/raw/license.json";
 
 const findAsar = (dir) => {
     const files = fs.readdirSync(dir);

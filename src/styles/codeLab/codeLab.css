@@ -13,7 +13,7 @@
 
 .cl-preview-section {
     flex: 1;
-    padding: 40px;
+    padding: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -40,6 +40,47 @@
     border: 1px dashed #2d333b;
     transition: width 0.1s, height 0.1s;
     z-index: 10;
+    padding: 2px;
+    box-sizing: content-box;
+}
+
+.cl-resizer {
+    position: absolute;
+    z-index: 100;
+    transition: background 0.2s;
+}
+
+/* Thanh bên phải - Chỉnh Width */
+.cl-resizer-r {
+    top: 0; right: -15px;
+    width: 6px; height: 100%;
+    cursor: e-resize;
+}
+
+/* Thanh dưới - Chỉnh Height */
+.cl-resizer-b {
+    bottom: -15px; left: 0;
+    width: 100%; height: 6px;
+    cursor: s-resize;
+}
+
+/* Nút góc - Chỉnh cả hai */
+.cl-resizer-br {
+    bottom: -25px; right: -25px;
+    width: 14px; height: 14px;
+    background: #535bf2;
+    border: 3px solid #1c2128;
+    border-radius: 4px;
+    cursor: nwse-resize;
+}
+
+.cl-resizer:hover {
+    background: rgba(83, 91, 242, 0.5);
+}
+
+.cl-resizer-br:hover {
+    transform: scale(1.2);
+    background: #00ff88;
 }
 
 .cl-shadow-container {
@@ -71,7 +112,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none;
+    /* pointer-events: none; */
     z-index: 20
 }
 
@@ -443,16 +484,17 @@ input[type=number]:focus {
 
 /* Menu nổi khi click vào chấm tròn */
 .cl-node-menu {
-    position: absolute;
+    position: fixed;
     display: none;
     background: #1c2128;
     border: 1px solid #444c56;
     border-radius: 8px;
-    padding: 5px;
-    gap: 5px;
-    z-index: 1000;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    transform: translate(-50%, -120%);
+    padding: 6px;
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    z-index: 9999;
+    /* Tạo vùng đệm phía dưới để di chuột lên không bị mất */
+    margin-top: -5px; 
 }
 
 .cl-node-menu button {
@@ -463,6 +505,14 @@ input[type=number]:focus {
     border-radius: 4px;
     font-size: 11px;
     cursor: pointer;
+}
+.cl-node-menu::before {
+    content: '';
+    position: absolute;
+    bottom: -15px; /* Vùng đệm 15px nối liền với chấm tròn */
+    left: 0;
+    right: 0;
+    height: 20px;
 }
 
 .cl-node-menu button:hover { background: #535bf2; }
@@ -478,4 +528,100 @@ input[type=number]:focus {
 #cl-corner-settings {
     display: none; /* Chỉ hiện khi chọn bo góc */
     border-left: 3px solid #535bf2;
+}
+
+/* SVG handle */
+
+.cl-svg-handles {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none; /* Để không chặn click vào chấm tròn */
+    z-index: 25;
+}
+
+.cl-corner-arc {
+    fill: none;
+    stroke: #535bf2;
+    stroke-width: 1.5; /* Mảnh hơn */
+    stroke-linecap: round;
+    pointer-events: all;
+    cursor: crosshair;
+    opacity: 0.7; /* Trong suốt nhẹ */
+    transition: opacity 0.2s, stroke 0.2s;
+    will-change: d;
+}
+
+.cl-corner-arc:hover {
+    opacity: 1;
+    stroke: #00ff88; 
+    stroke-width: 2.5;
+}
+
+.cl-corner-arc.dragging {
+    opacity: 1;
+    stroke: #ff0080;
+    stroke-width: 2.5;
+}
+
+/* Nhóm chứa handle góc */
+.cl-corner-handle-group .cl-corner-arc {
+    fill: none;
+    stroke: #535bf2;
+    stroke-width: 1.2;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+/* Hiện khi HOVER hoặc khi đang được KÉO */
+.cl-corner-handle-group:hover .cl-corner-arc,
+.cl-corner-handle-group.active-drag .cl-corner-arc {
+    opacity: 1;
+    stroke: #00ff88;
+}
+
+/* Hiệu ứng riêng khi đang nắm giữ (đổi màu mạnh hơn) */
+.cl-corner-handle-group.active-drag .cl-corner-arc {
+    stroke: #ff0080;
+    stroke-width: 2.5;
+    opacity: 1;
+    /* QUAN TRỌNG: Tắt transition khi đang kéo để tránh bị giật lag */
+    transition: none !important;
+}
+
+/* Vùng bấm tàng hình */
+.cl-corner-hit-area {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 15; 
+    cursor: ns-resize;
+    pointer-events: all;
+}
+
+.cl-dot {
+    z-index: 30; 
+}
+
+/* Thêm vào CSS của Duy Anh */
+.cl-target, .cl-corner-arc, .cl-corner-hit-area {
+    /* Ép trình duyệt dùng GPU để xử lý biến đổi hình dạng */
+    will-change: clip-path, d;
+    backface-visibility: hidden;
+}
+
+.cl-corner-handle-group.active-drag .cl-corner-arc {
+    transition: none !important; /* Tuyệt đối không để transition khi kéo */
+    stroke-width: 2;
+    stroke: #00ff88;
+}
+
+.cl-snap-guide-v {
+    position: absolute; top: 0; bottom: 0; width: 1px;
+    background: #a855f7; border-left: 1px dashed #a855f7;
+    z-index: 25; display: none; pointer-events: none;
+}
+.cl-snap-guide-h {
+    position: absolute; left: 0; right: 0; height: 1px;
+    background: #a855f7; border-top: 1px dashed #a855f7;
+    z-index: 25; display: none; pointer-events: none;
 }

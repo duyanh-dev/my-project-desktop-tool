@@ -46,20 +46,36 @@ function renderLateResult(type, rawIn, end, mins, title = "HƯỚNG DẪN TẠO 
 }
 
 function renderEarlyResult(type, rawIn, rawOut, start, end, mins, wait, title) {
-    const inMins = timeToMins(rawIn);
-    // Tính các mốc 15, 30, 45 phút dựa trên giờ ra chuẩn (end)
     const endMins = timeToMins(end);
-    const mốc15 = formatTime(endMins - 15);
-    const mốc30 = formatTime(endMins - 30);
-    const mốc45 = formatTime(endMins - 45);
+    const outMins = timeToMins(rawOut);
+    
+    // 1. TẠO BẢNG ĐỐI CHIẾU LINH HOẠT
+    const milestones = [15, 30, 45, 60, 90, 120, 180, 240]; // Các mốc phút muốn hiển thị
+    let tableHtml = '';
+    
+    milestones.forEach(m => {
+        if (m <= mins + 60 || m <= 60) {
+            const timeAtMins = formatTime(endMins - m);
+            const hourLabel = m >= 60 ? ` (${(m/60).toFixed(1)}h)` : '';
+            tableHtml += `• Nghỉ <b>${m} phút${hourLabel}</b> => Về lúc <b>${timeAtMins}</b><br>`;
+        }
+    });
+
+    const currentGap = endMins - outMins; 
+    const currentBlock = Math.ceil(currentGap / 15) * 15; 
+    const nextBetterBlock = currentBlock - 15; 
+    const timeToHitNextBlock = formatTime(endMins - nextBetterBlock);
 
     const stayMore = Math.ceil(wait);
+    const missingMins = Math.ceil(mins - 15 + wait);
+    const minsMinus15 = mins - 15;
+
     const optimizationTip = stayMore > 0 
         ? `<div style="margin-top:12px; padding:12px; background:rgba(99,102,241,0.1); border-radius:8px; border-left:4px solid #6366f1; color: #a5b4fc; font-size: 12px;">
             <i class="fa-solid fa-wand-magic-sparkles"></i> <b>MẸO TIẾT KIỆM PHÉP:</b><br>
-            Hiện tại bạn đang thiếu <b>${Math.ceil(mins - 15 + wait)} phút</b> nên phải xin đơn <b>${mins} phút</b>. 
-            Nếu bạn ráng ở lại thêm <b>${stayMore} phút</b> (đến <b>${formatTime(timeToMins(rawOut) + stayMore)}</b>), 
-            khoảng hụt sẽ giảm xuống còn <b>${mins - 15} phút</b>.
+            Hiện tại bạn đang thiếu <b>${missingMins} phút (~${(missingMins / 60).toFixed(2)} giờ)</b> nên phải xin đơn <b>${mins} phút (~${(mins / 60).toFixed(2)} giờ)</b>.<br>
+            Nếu bạn ráng ở lại thêm <b>${stayMore} phút</b> (đến <b>${formatTime(outMins + stayMore)}</b>), 
+            khoảng hụt sẽ giảm xuống còn <b>${minsMinus15} phút (~${(minsMinus15 / 60).toFixed(2)} giờ)</b>.
            </div>`
         : '';
 
@@ -75,14 +91,12 @@ function renderEarlyResult(type, rawIn, rawOut, start, end, mins, wait, title) {
                 <div class="lh-summary-text">
                     <div style="margin-bottom: 8px; color: #818cf8; border-bottom: 1px solid rgba(129, 140, 248, 0.2); padding-bottom: 5px;">PHÂN TÍCH LOGIC VỀ SỚM:</div>
                     • <b>Nguyên tắc 8h:</b> Với giờ vào <b>${rawIn}</b>, bạn cần làm đến <b>${end}</b> để đủ định mức.<br>
-                    • <b>Thực tế:</b> Bạn rời đi lúc ${rawOut}, thiếu <b>${Math.ceil(mins - 15 + wait)} phút</b>.<br>
-                    • <b>Quy tắc 15p:</b> Để bù hoàn toàn số phút thiếu, đơn của bạn phải là <b>${mins} phút</b>.
+                    • <b>Thực tế:</b> Bạn rời đi lúc <b>${rawOut}</b>, thiếu hụt thực tế là <b>${currentGap} phút</b>.<br>
+                    • <b>Quy tắc 15p:</b> Hệ thống làm tròn lên mốc 15 phút gần nhất, do đó đơn của bạn phải là <b>${mins} phút (~${(mins / 60).toFixed(2)} giờ)</b>.
 
                     <div style="margin: 12px 0; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; font-size: 12px;">
                         <b style="color: #cbd5e1; display: block; margin-bottom: 5px;">BẢNG ĐỐI CHIẾU MỐC GIỜ & PHÉP:</b>
-                        • Muốn về sớm 15 phút $\rightarrow$ Về lúc <b>${mốc15}</b><br>
-                        • Muốn về sớm 30 phút $\rightarrow$ Về lúc <b>${mốc30}</b><br>
-                        • Muốn về sớm 45 phút $\rightarrow$ Về lúc <b>${mốc45}</b><br>
+                        ${tableHtml}
                         <span style="color: #94a3b8; font-style: italic;">(Dựa trên giờ ra chuẩn của bạn là ${end})</span>
                     </div>
 
